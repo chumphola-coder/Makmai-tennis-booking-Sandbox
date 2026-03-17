@@ -139,10 +139,10 @@
                     </button>
                 </div>
                 
-                <!-- PWA Install Button (Hidden by default, shown via JS if supported) -->
+                <!-- PWA Install Button (Hidden by default, shown via JS if supported or on iOS) -->
                 <button id="installPwaBtn" class="hidden px-4 py-2 bg-gradient-to-r from-pink-500 to-orange-400 text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all items-center gap-2 shadow-md md:mt-0 w-full md:w-auto justify-center">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    ติดตั้งแอป
+                    ติดตั้งแอปพลิเคชัน
                 </button>
 
                 <!-- Login Button -->
@@ -511,7 +511,7 @@
     <!-- ========================================== -->
     <script>
         (function initPWA() {
-            // 1. Create Web Manifest Dynamically
+            // 1. Create Web Manifest Dynamically (ใช้วิธี Data URI ให้สมบูรณ์แบบที่สุด)
             const manifestData = {
                 "name": "Makmai Tennis Club",
                 "short_name": "Makmai Tennis",
@@ -534,8 +534,8 @@
                 ]
             };
             
-            const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-            const manifestUrl = URL.createObjectURL(manifestBlob);
+            const manifestString = JSON.stringify(manifestData);
+            const manifestUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(manifestString);
             const manifestLink = document.createElement('link');
             manifestLink.rel = 'manifest';
             manifestLink.href = manifestUrl;
@@ -543,22 +543,14 @@
 
             // 2. Create Service Worker Dynamically
             const swCode = `
-                const CACHE_NAME = 'makmai-tennis-pwa-v1';
-                const urlsToCache = [
-                    'https://cdn.tailwindcss.com',
-                    'https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap',
-                    'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css'
-                ];
-
+                const CACHE_NAME = 'makmai-tennis-pwa-v2';
+                
                 self.addEventListener('install', event => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-                    );
+                    self.skipWaiting();
                 });
 
                 self.addEventListener('fetch', event => {
-                    // ใช้ Network First สำหรับ PWA เพื่อให้ได้ข้อมูลจองล่าสุดเสมอ 
-                    // ถ้าหลุดเน็ต ค่อยดึงโครงร่างจาก Cache
+                    // Network First
                     if (event.request.method !== 'GET') return;
                     event.respondWith(
                         fetch(event.request).catch(() => caches.match(event.request))
@@ -572,42 +564,63 @@
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register(swUrl)
-                        .then(reg => console.log('ServiceWorker registered automatically.'))
-                        .catch(err => console.log('ServiceWorker registration failed: ', err));
+                        .then(reg => console.log('ServiceWorker registered.'))
+                        .catch(err => console.log('SW registration failed: ', err));
                 });
             }
 
-            // 3. Handle Install Prompt
+            // 3. Handle Install Prompt & iOS Fallback
+            const installBtn = document.getElementById('installPwaBtn');
+            
+            // เช็คว่าเป็น iOS หรือไม่
+            const isIos = () => {
+                const userAgent = window.navigator.userAgent.toLowerCase();
+                return /iphone|ipad|ipod/.test(userAgent);
+            };
+            // เช็คว่าเปิดใช้งานผ่านแอพหรือยัง
+            const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+            // สำหรับ Android, Chrome Desktop (เหตุการณ์ปกติ)
             let deferredPrompt;
             window.addEventListener('beforeinstallprompt', (e) => {
-                // ป้องกันไม่ให้เบราว์เซอร์โชว์ Popup เอง (ให้เราควบคุมเอง)
+                // ป้องกัน Popup อัตโนมัติ
                 e.preventDefault();
                 deferredPrompt = e;
                 
-                // แสดงปุ่มติดตั้ง
-                const installBtn = document.getElementById('installPwaBtn');
                 if(installBtn) {
                     installBtn.classList.remove('hidden');
                     installBtn.classList.add('flex');
                     
                     installBtn.onclick = async () => {
-                        // โชว์หน้าจอถามการติดตั้ง
                         deferredPrompt.prompt();
-                        // รอผลลัพธ์ว่าผู้ใช้กดตกลงหรือยกเลิก
                         const { outcome } = await deferredPrompt.userChoice;
                         if (outcome === 'accepted') {
-                            installBtn.style.display = 'none'; // ซ่อนปุ่มถ้าติดตั้งแล้ว
+                            installBtn.style.display = 'none';
                         }
                         deferredPrompt = null;
                     };
                 }
             });
 
-            // ตรวจจับกรณีติดตั้งเรียบร้อยแล้วให้ซ่อนปุ่ม
+            // Fallback: สำหรับ iOS (Safari) จะไม่มี Event beforeinstallprompt เราเลยบังคับให้แสดงปุ่มแทน
+            if (isIos() && !isInStandaloneMode()) {
+                if(installBtn) {
+                    installBtn.classList.remove('hidden');
+                    installBtn.classList.add('flex');
+                    
+                    installBtn.onclick = () => {
+                        // ใช้ Alert ของระบบ หรือ Alert ธรรมดาก็ได้
+                        if(window.showAlert) {
+                            window.showAlert("สำหรับ iOS: กดปุ่ม 'แชร์' ด้านล่าง แล้วเลือก 'เพิ่มไปยังหน้าจอโฮม' (Add to Home Screen)");
+                        } else {
+                            alert("สำหรับ iOS: กดปุ่ม 'แชร์' [ไอคอนสี่เหลี่ยมมีลูกศรชี้ขึ้น] ด้านล่าง แล้วเลือก 'เพิ่มไปยังหน้าจอโฮม' (Add to Home Screen)");
+                        }
+                    };
+                }
+            }
+
             window.addEventListener('appinstalled', () => {
-                const installBtn = document.getElementById('installPwaBtn');
                 if(installBtn) installBtn.style.display = 'none';
-                console.log('PWA was installed');
             });
         })();
     </script>
