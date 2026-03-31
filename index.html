@@ -516,6 +516,9 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Environment key setup
+        const GEMINI_API_KEY = ""; // Provided by execution environment at runtime
+
         const config = {
             apiKey: "AIzaSyA4ACuJR2m49qx-I56bkO-VIiyMHbnXXSM",
             authDomain: "makmai-tennis-booking.firebaseapp.com",
@@ -546,6 +549,63 @@
         let db, auth, app, collectionRef;
         const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
         const originalDocTitle = document.title;
+
+        // --- OCR AI SCAN FUNCTION ---
+        async function scanSlipAmountWithGemini(base64String) {
+            try {
+                // Ensure base64 format without data prefix
+                const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
+                
+                // Prompt designed to extract only the numeric amount from Thai banking slips
+                const prompt = "This is a bank transfer slip from Thailand (e.g., K PLUS, SCB EASY, KTB, BBL). Find the transfer amount (จำนวนเงิน / ยอดโอน). Return ONLY the numerical value without any commas, currency symbols, or extra text. For example, if the amount is 1,200.50, return 1200.50. If you cannot clearly read the amount, return 0.";
+                
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+                
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                        ]
+                    }]
+                };
+
+                // Implement exponential backoff for API calls
+                const delays = [1000, 2000, 4000, 8000, 16000];
+                for (let attempt = 0; attempt <= 5; attempt++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!response.ok) {
+                            if (attempt === 5) throw new Error(`HTTP error! status: ${response.status}`);
+                            await new Promise(r => setTimeout(r, delays[attempt]));
+                            continue;
+                        }
+                        
+                        const result = await response.json();
+                        const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "0";
+                        
+                        // Parse clean numbers
+                        const parsedAmount = parseFloat(text.replace(/[^0-9.]/g, ''));
+                        return isNaN(parsedAmount) ? 0 : parsedAmount;
+                        
+                    } catch (error) {
+                        if (attempt === 5) {
+                            console.warn("Failed to scan slip with AI:", error);
+                            return 0; // Return 0 to prevent blocking the flow
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("OCR Pre-processing error:", err);
+            }
+            return 0;
+        }
 
         // --- CUSTOM MODALS FOR IFRAME COMPATIBILITY ---
         window.customPrompt = function(title) {
@@ -901,7 +961,7 @@
 125/258,คุณยอดพงศ์  รามสูต
 125/259,คุณศิริพร  วัฒนกุล
 125/260,คุณศิริพร วัฒนกุล
-125/261,คุณศิริพร  วัฒนกุล
+125/261,คุณศิริพร  วัฒกุล
 125/262,คุณเสริมศักดิ์  ลักษณานันท์
 125/263,คุณจินดา  คละทอง
 125/264,คุณจักรพงศ์  เจริญรักษ์วรกิจ
@@ -1820,10 +1880,11 @@
             });
         };
 
+        // INTEGRATE AI SCAN INTO SUBMIT
         document.getElementById('bookingForm').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('submitBtn'); const fd = new FormData(e.target);
             try {
-                btn.disabled = true; btn.innerHTML = '<span>กำลังบันทึก...</span>';
+                btn.disabled = true; btn.innerHTML = '<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังใช้ AI ตรวจสอบสลิป...</span>';
                 const date = fd.get('date'), time = fd.get('time'), startH = parseInt(time.split(':')[0], 10), hours = parseInt(fd.get('hours'), 10), cleanAddress = window.normalizeAddress(fd.get('address')), weekStr = window.getWeekString(date), finalOwnerName = (fd.get('ownerName1') + ' ' + fd.get('ownerName2')).trim(), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour(), files = document.getElementById('slipInput').files, isCurrentHour = (date === todayThaiStr && startH === nowH);
 
                 if (window.isPastBookingMode) {
@@ -1841,12 +1902,30 @@
                 if (window.allBookingsCache.filter(b => b.date === date && b.court === fd.get('court')).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!");
 
                 let slipsArray = [];
+                let totalScannedAmount = 0;
+                
+                // Compress & Scan with AI
                 for(let i = 0; i < files.length; i++) {
-                    slipsArray.push(await compressImage(files[i]));
+                    const compressedBase64 = await compressImage(files[i]);
+                    slipsArray.push(compressedBase64);
+                    const scannedAmt = await scanSlipAmountWithGemini(compressedBase64);
+                    totalScannedAmount += scannedAmt;
                 }
 
                 let implicitLightHours = 0, totalPrice = 0;
                 for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
+                
+                // Compare scanned amount with expected total price
+                if (files.length > 0 && totalScannedAmount > 0 && totalScannedAmount < totalPrice) {
+                    const confirmed = await window.customConfirm(`ระบบ AI ตรวจพบยอดเงินในสลิปรวม ฿${totalScannedAmount} ซึ่งไม่ตรงกับยอดที่ต้องชำระ ฿${totalPrice}\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`, "ตรวจสอบยอดเงิน (แจ้งเตือนจาก AI)", true);
+                    if (!confirmed) {
+                        btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
+                        return;
+                    }
+                }
+                
+                btn.innerHTML = '<span>กำลังบันทึกข้อมูล...</span>';
+                
                 const newId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
 
                 if (!collectionRef) return window.showAlert("❌ ฐานข้อมูลยังไม่ได้เชื่อมต่อ");
@@ -2039,15 +2118,30 @@
             } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ"); } 
         };
         
+        // INTEGRATE AI SCAN INTO UPDATE SLIP
         document.getElementById('updateSlipInput').onchange = async (e) => {
             const files = e.target.files; if (files.length === 0 || !window.currentUploadId) return;
             try {
                 const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentUploadId));
                 if (b) { 
+                    window.showAlert("กำลังใช้ AI สแกนยอดเงินในสลิปใหม่...");
                     let existingSlips = window.getSlips(b);
+                    let newScannedAmount = 0;
+                    
                     for(let i=0; i<files.length; i++) {
-                        existingSlips.push(await compressImage(files[i]));
+                        const compressedBase64 = await compressImage(files[i]);
+                        existingSlips.push(compressedBase64);
+                        const scannedAmt = await scanSlipAmountWithGemini(compressedBase64);
+                        newScannedAmount += scannedAmt;
                     }
+                    
+                    if (newScannedAmount > 0) {
+                        const confirmed = await window.customConfirm(`ระบบ AI อ่านยอดเงินจากสลิปที่อัปโหลดใหม่รวม: ฿${newScannedAmount}\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`, "ตรวจสอบยอดเงิน (แจ้งเตือนจาก AI)", false);
+                        if (!confirmed) {
+                             e.target.value = ''; window.currentUploadId = null; return;
+                        }
+                    }
+
                     b.slips = existingSlips;
                     if(b.slip) b.slip = ""; // clear legacy
                     
