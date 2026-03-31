@@ -1246,8 +1246,9 @@
                         if(spinner) spinner.classList.add('hidden');
                         if(statusBox) {
                             statusBox.className = "mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs bg-orange-50 border-orange-200 text-orange-700";
-                            statusText.innerText = "❌ เชื่อมต่อระบบ AI ล้มเหลว (กดจองต่อได้เลย)";
+                            statusText.innerText = "❌ เซิร์ฟเวอร์ AI ล้มเหลว (กดจองต่อได้)";
                         }
+                        window.showAlert("⚠️ ขัดข้อง: ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ AI ได้");
                     } finally {
                         document.getElementById('submitBtn').disabled = false; // ปลดล็อคปุ่ม
                     }
@@ -1411,6 +1412,8 @@
                         if (window.hasSlip(b)) {
                             if (b.slipStatus === 'mismatch' || b.slipStatus === 'invalid') {
                                 cls = 'bg-red-100 text-red-800 border border-red-400 shadow-sm';
+                            } else if (b.slipStatus === 'error') {
+                                cls = 'bg-orange-100 text-orange-800 border border-orange-300'; // ถ้า AI เอ๋อ จะขึ้นสีส้ม
                             } else {
                                 cls = fin ? 'slot-played' : 'slot-paid';
                             }
@@ -1465,8 +1468,9 @@
                     const paid = window.hasSlip(b);
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
-                    if (paid && (b.slipStatus === 'mismatch' || b.slipStatus === 'invalid')) {
-                        tr.classList.replace('border-emerald-500', 'border-red-500'); // ไฮไลท์กรอบเป็นสีแดง
+                    if (paid) {
+                        if (b.slipStatus === 'mismatch' || b.slipStatus === 'invalid') tr.classList.replace('border-emerald-500', 'border-red-500');
+                        else if (b.slipStatus === 'error') tr.classList.replace('border-emerald-500', 'border-orange-400');
                     }
 
                     tr.onclick = (e) => {
@@ -1507,6 +1511,8 @@
                             badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-red-100 text-red-700 border border-red-300 shadow-sm animate-pulse">ยอดไม่ตรง!</span>`;
                         } else if (b.slipStatus === 'invalid') {
                             badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-red-100 text-red-700 border border-red-300">สลิปมีปัญหา</span>`;
+                        } else if (b.slipStatus === 'error') {
+                            badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-orange-100 text-orange-700 border border-orange-300">AI ขัดข้อง/รอตรวจ</span>`;
                         } else {
                             badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-blue-100 text-blue-700">ชำระแล้ว</span>`;
                         }
@@ -2148,24 +2154,49 @@
         
         document.getElementById('updateSlipInput').onchange = async (e) => {
             const files = e.target.files; if (files.length === 0 || !window.currentUploadId) return;
+            window.showAlert("กำลังตรวจสอบสลิปใหม่ด้วย AI...");
             try {
                 const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentUploadId));
                 if (b) { 
-                    let existingSlips = window.getSlips(b);
-                    for(let i=0; i<files.length; i++) {
-                        existingSlips.push(await compressImage(files[i]));
-                    }
-                    b.slips = existingSlips;
-                    if(b.slip) b.slip = ""; // clear legacy
+                    const file = files[0];
+                    const reader = new FileReader();
                     
-                    await setDoc(doc(collectionRef, String(b.id)), b); 
-                    
-                    if (document.getElementById('slipModal').classList.contains('modal-active')) {
-                        window.currentSlipArray = [...b.slips];
-                        window.currentSlipIndex = window.currentSlipArray.length - 1; // Go to newly added
-                        window.updateSlipModalView();
-                    }
-                    window.showAlert(`เพิ่มสลิปเรียบร้อย (${files.length} รูป)`); 
+                    reader.onload = async (ev) => {
+                        const base64Data = ev.target.result.split(',')[1];
+                        let aiStatus = 'pending';
+                        
+                        // เช็ค AI ตอนกดเพิ่มสลิปใหม่
+                        try {
+                            if (!functionsClient) throw new Error("Functions ไม่พร้อมทำงาน");
+                            const verifySlipCall = httpsCallable(functionsClient, 'verifySlip');
+                            const res = await verifySlipCall({ imageBase64: base64Data, expectedAmount: Number(b.totalPrice) });
+                            
+                            aiStatus = res.data.status;
+                            if (aiStatus === 'verified') window.showAlert(`✅ ตรวจสอบผ่าน! ยอดเงิน ฿${res.data.extractedAmount}`);
+                            else if (aiStatus === 'mismatch') window.showAlert(`⚠️ ยอดไม่ตรง! (ในสลิป ฿${res.data.extractedAmount})`);
+                            else window.showAlert(`❌ ตรวจสอบไม่ได้: ${res.data.message}`);
+                        } catch(err) {
+                            console.error(err);
+                            aiStatus = 'error';
+                            window.showAlert("⚠️ AI ขัดข้อง: ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+                        }
+
+                        let existingSlips = window.getSlips(b);
+                        for(let i=0; i<files.length; i++) existingSlips.push(await compressImage(files[i]));
+                        
+                        b.slips = existingSlips;
+                        if(b.slip) b.slip = ""; // clear legacy
+                        b.slipStatus = aiStatus; // เซฟสถานะกลับเข้าไป
+                        
+                        await setDoc(doc(collectionRef, String(b.id)), b); 
+                        
+                        if (document.getElementById('slipModal').classList.contains('modal-active')) {
+                            window.currentSlipArray = [...b.slips];
+                            window.currentSlipIndex = window.currentSlipArray.length - 1; // ไปที่รูปเพิ่งเพิ่ม
+                            window.updateSlipModalView();
+                        }
+                    };
+                    reader.readAsDataURL(file);
                 }
             } catch (err) { window.showAlert("อัปโหลดไม่สำเร็จ"); } finally { e.target.value = ''; window.currentUploadId = null; }
         };
@@ -2174,7 +2205,7 @@
         window.initAuth = async function() {
             try {
                 app = initializeApp(config); auth = getAuth(app); db = getFirestore(app); collectionRef = collection(db, 'bookings');
-                functionsClient = getFunctions(app, 'asia-southeast1');
+                functionsClient = getFunctions(app, 'asia-southeast1'); // บรรทัดนี้ที่หายไป ทำให้มันเชื่อมต่อไม่ได้!
 
                 await signInAnonymously(auth);
                 onSnapshot(collectionRef, (snap) => {
