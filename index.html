@@ -563,6 +563,7 @@
         // --- OCR AI SCAN FUNCTION (Gemini Only) ---
         async function scanSlipAmountWithAI(base64String) {
             const apiKey = window.geminiKey || "";
+            const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
             
             try {
                 // Ensure base64 format without data prefix
@@ -575,64 +576,45 @@ Respond strictly in JSON format with a single key "amount" containing the numeri
 Example: {"amount": 1500.50}
 If you absolutely cannot find the amount, return {"amount": 0}`;
                 
-                // ใช้โมเดล gemini-2.5-flash-preview-09-2025 ตามมาตรฐาน
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
                 
-                const delays = [1000, 2000, 4000, 8000, 16000];
-                let response = null;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // ให้เวลา AI ฝั่ง Frontend สูงสุด 15 วินาที
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
+                        generationConfig: { temperature: 0, responseMimeType: "application/json" }
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
 
-                for (let i = 0; i <= 5; i++) {
-                    try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 15000); 
-                        
-                        response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                                generationConfig: { temperature: 0, responseMimeType: "application/json" }
-                            }),
-                            signal: controller.signal
-                        });
-                        clearTimeout(timeoutId);
-
-                        if (response.ok) {
-                            const result = await response.json();
-                            const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                            if (text) {
-                                try {
-                                    const parsed = JSON.parse(text);
-                                    return Number(parsed.amount) || 0;
-                                } catch(e) {
-                                    const match = text.replace(/,/g, '').match(/[0-9]+(\.[0-9]+)?/);
-                                    if (match) return parseFloat(match[0]);
-                                }
-                            }
-                            return 0;
+                if (response.ok) {
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                    if (text) {
+                        try {
+                            const parsed = JSON.parse(text);
+                            return Number(parsed.amount) || 0;
+                        } catch(e) {
+                            const match = text.replace(/,/g, '').match(/[0-9]+(\.[0-9]+)?/);
+                            if (match) return parseFloat(match[0]);
                         }
-                        
-                        if (response.status === 400 || response.status === 403) {
-                            break; // Do not retry on Bad Request or Forbidden
-                        }
-                    } catch (err) {
-                        // Suppress error log and prepare to retry
                     }
-                    
-                    if (i < 5) {
-                        await new Promise(r => setTimeout(r, delays[i]));
-                    }
+                    return 0;
+                } else if (response.status === 429) {
+                    console.warn("Gemini Rate Limit Exceeded");
+                    return -1; // ถ้าโควต้าเต็ม (ทดสอบรัวเกินไป) ให้คืนค่า -1 ทันที เพื่อเด้ง popup ให้ผู้ใช้กดยืนยันด้วยมือ
+                } else {
+                    console.error("Gemini API Error:", response.status, await response.text());
+                    return -1; // API มีปัญหา ให้เด้ง popup แจ้งเตือนข้าม
                 }
-                
-                if (response && response.status === 429) {
-                     window.showAlert("⚠️ โควต้า AI เต็ม (Rate Limit) กรุณารอสักครู่ ระบบจะข้ามการตรวจสลิปให้ก่อน", "danger");
-                } else if (!response || !response.ok) {
-                     window.showAlert("⚠️ ระบบ AI ขัดข้อง หรือเชื่อมต่อเซิร์ฟเวอร์ไม่ได้", "danger");
-                }
-                
-                return -1;
             } catch (err) {
-                return -1;
+                console.warn("Gemini Network/Timeout Error:", err.message);
+                return -1; // Network error หรือหมดเวลา 15 วิ ให้เด้ง popup
             }
         }
 
