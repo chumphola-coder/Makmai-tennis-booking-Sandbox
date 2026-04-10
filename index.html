@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <!-- อนุญาตให้ซูมเข้าออกบนมือถือและ PWA -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Makmai Tennis Club - Booking System (Online)</title>
     <meta name="description" content="ระบบจองคอร์ตเทนนิสหมู่บ้านแมกไม้ (Online Cloud Version)">
@@ -107,7 +108,7 @@
                 </div>
             </div>
 
-            <!-- Center: Logo (Hidden for Guest to save space on mobile) -->
+            <!-- Center: Logo -->
             <div id="logoContainer" class="flex-shrink-0 my-2 md:my-0 hidden md:block">
                 <img src="แมกไม้พื้นหลังดำ.jpg" class="h-16 md:h-24 w-16 md:w-24 object-cover rounded-lg shadow-sm bg-slate-800" alt="Makmai Logo" onerror="this.style.display='none'">
             </div>
@@ -145,10 +146,9 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-            <!-- Left: Booking Form (Hidden by default for Guest) -->
+            <!-- Left: Booking Form -->
             <div id="leftColumn" class="lg:col-span-4 no-print hidden">
                 <div class="glass-panel p-4 md:p-5 border border-slate-200 sticky top-4 w-full" id="bookingPanel">
-                    
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="text-lg md:text-xl font-bold text-slate-700 transition-colors" id="formTitle">จองคอร์ตสนามเทนนิส</h2>
                         <button type="button" id="togglePastModeBtn" onclick="window.togglePastBookingMode()" class="px-2 md:px-3 py-1 md:py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] md:text-[11px] font-bold hover:bg-slate-200 transition-colors flex items-center gap-1 shadow-sm">
@@ -240,8 +240,7 @@
 
             <!-- Right: Content -->
             <div id="rightColumn" class="lg:col-span-12 space-y-4 md:space-y-6 w-full">
-                
-                <!-- 1. Booking List -->
+                <!-- Booking List Table -->
                 <div class="glass-panel border border-slate-200 overflow-hidden no-print w-full">
                     <div class="p-3 md:p-4 bg-white border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
                         <h3 class="font-bold text-slate-800 text-sm md:text-base">รายการจองรายสัปดาห์</h3>
@@ -273,7 +272,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Visual Schedule -->
+                <!-- Visual Schedule -->
                 <div class="glass-panel p-3 md:p-5 border border-slate-200 w-full overflow-hidden">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-4">
                         <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-between">
@@ -306,12 +305,11 @@
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- Modals (Forms and Popups) -->
+    <!-- Modals (Exactly 1 Instance of Each) -->
     
     <!-- Upload Slip Prompt Modal -->
     <div id="uploadSlipPromptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
@@ -525,15 +523,15 @@
         <div class="max-w-2xl w-full flex flex-col items-center gap-4 mx-2">
             <div class="relative w-full flex justify-center bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 group">
                 <img id="slipPreview" src="" class="max-h-[60vh] md:max-h-[70vh] w-auto object-contain shadow-2xl transition-opacity duration-300">
-                <button id="btnPrevSlip" onclick="window.prevSlip()" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all hidden">
+                <button id="btnPrevSlip" onclick="event.stopPropagation(); window.prevSlip()" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all hidden">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <button id="btnNextSlip" onclick="window.nextSlip()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all hidden">
+                <button id="btnNextSlip" onclick="event.stopPropagation(); window.nextSlip()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all hidden">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
                 <div id="slipCounter" class="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md hidden">1 / 1</div>
             </div>
-            <div class="no-print flex flex-col items-center justify-center gap-2 sm:gap-3 w-full p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl relative z-10">
+            <div class="no-print flex flex-col items-center justify-center gap-2 sm:gap-3 w-full p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl relative z-10" onclick="event.stopPropagation();">
                 <label class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl cursor-pointer shadow-md w-full md:w-auto justify-center hover:bg-blue-50 transition-colors">
                     <input type="checkbox" id="modalIsMultipleSlip" class="w-5 h-5 text-blue-600 rounded cursor-pointer focus:ring-blue-500" onchange="window.toggleMultipleBookingStatus(this.checked)">
                     <span class="text-sm font-bold text-slate-700 select-none">ใบเสร็จหลายการจอง (เปลี่ยนสถานะ ชำระเกิน ➜ ชำระแล้ว)</span>
@@ -780,6 +778,162 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         window.openBackupModal = () => { document.getElementById('backupModal').classList.add('modal-active'); };
         window.closeMaintenanceModal = () => { document.getElementById('autoMaintenanceModal').classList.remove('modal-active'); };
         window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); window.currentUploadId = null; };
+
+        // --- SLIP MODAL NAVIGATION & UPDATE (RESTORED) ---
+        window.updateSlipModalView = () => {
+            const img = document.getElementById('slipPreview');
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = window.currentSlipArray[window.currentSlipIndex];
+                img.style.opacity = 1;
+            }, 150);
+            
+            const counter = document.getElementById('slipCounter');
+            const btnPrev = document.getElementById('btnPrevSlip');
+            const btnNext = document.getElementById('btnNextSlip');
+            
+            if (window.currentSlipArray.length > 1) {
+                counter.innerText = `${window.currentSlipIndex + 1} / ${window.currentSlipArray.length}`;
+                counter.classList.remove('hidden');
+                btnPrev.classList.toggle('hidden', window.currentSlipIndex === 0);
+                btnNext.classList.toggle('hidden', window.currentSlipIndex === window.currentSlipArray.length - 1);
+            } else {
+                counter.classList.add('hidden');
+                btnPrev.classList.add('hidden');
+                btnNext.classList.add('hidden');
+            }
+        };
+
+        window.prevSlip = () => {
+            if (window.currentSlipIndex > 0) {
+                window.currentSlipIndex--;
+                window.updateSlipModalView();
+            }
+        };
+
+        window.nextSlip = () => {
+            if (window.currentSlipIndex < window.currentSlipArray.length - 1) {
+                window.currentSlipIndex++;
+                window.updateSlipModalView();
+            }
+        };
+
+        window.viewSlipFromId = (id) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            window.currentSlipArray = window.getSlips(b);
+            if(window.currentSlipArray.length > 0) { 
+                window.currentViewingSlipId = id; 
+                window.currentSlipIndex = 0;
+                window.updateSlipModalView();
+                
+                const isP = window.isBookingPast(b); 
+                const btnC = document.getElementById('btnChangeSlipModal');
+                const btnR = document.getElementById('btnRemoveSlipModal'); 
+                const chkM = document.getElementById('modalIsMultipleSlip');
+                
+                if (chkM) {
+                    chkM.checked = !!b.isMultipleBooking;
+                    chkM.disabled = isP && !window.adminMode;
+                }
+                
+                if (isP && !window.adminMode) { 
+                    btnC.style.display = 'none'; 
+                    btnR.style.display = 'none'; 
+                } else { 
+                    btnC.style.display = 'flex'; 
+                    btnR.style.display = 'flex'; 
+                } 
+                document.getElementById('slipModal').classList.add('modal-active'); 
+            } else {
+                window.showAlert("ไม่พบรูปสลิป", "danger"); 
+            }
+        };
+
+        window.toggleMultipleBookingStatus = async (isChecked) => {
+            if (!window.currentViewingSlipId) return;
+            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId));
+            if (!b) return;
+
+            const isP = window.isBookingPast(b);
+            if (isP && !window.adminMode) {
+                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
+                return window.showAlert("❌ ไม่สามารถแก้ไขสถานะรายการในอดีตได้", "danger");
+            }
+
+            try {
+                b.isMultipleBooking = isChecked;
+                await setDoc(doc(collectionRef, String(b.id)), b);
+                window.showAlert("อัปเดตสถานะใบเสร็จเรียบร้อย", "success");
+            } catch(e) {
+                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
+                window.showAlert("อัปเดตสถานะไม่สำเร็จ: " + e.message, "danger");
+            }
+        };
+
+        window.addMoreSlipInModal = async () => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            window.currentUploadId = window.currentViewingSlipId; 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
+        };
+
+        window.triggerUploadSlip = (id) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            window.currentUploadId = id; 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
+        };
+
+        window.removeCurrentSlipInModal = () => { 
+            if (!window.currentViewingSlipId) return; 
+            window.removeSlip(window.currentViewingSlipId, true); 
+        };
+
+        window.removeSlip = async (id, fromM = false) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            
+            const isLast = window.currentSlipArray.length <= 1;
+            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
+            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
+            if (!confirmed) return; 
+            
+            try { 
+                window.currentSlipArray.splice(window.currentSlipIndex, 1);
+                
+                b.slips = [...window.currentSlipArray];
+                if (b.slip) b.slip = ""; 
+
+                if (b.slips.length === 0) {
+                    b.scannedAmount = 0;
+                } else {
+                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
+                    let newTotal = 0;
+                    for (let slipData of b.slips) {
+                         const amt = Number(await scanSlipAmountWithAI(slipData));
+                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
+                    }
+                    b.scannedAmount = newTotal;
+                }
+                
+                await setDoc(doc(collectionRef, String(b.id)), b); 
+                
+                if (fromM) { 
+                    if (window.currentSlipArray.length === 0) {
+                        window.closeModal(); 
+                        document.getElementById('slipPreview').src = ''; 
+                    } else {
+                        if (window.currentSlipIndex >= window.currentSlipArray.length) {
+                            window.currentSlipIndex = window.currentSlipArray.length - 1;
+                        }
+                        window.updateSlipModalView();
+                    }
+                } 
+                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
+            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
+        };
 
         window.houseOwnerDB = {};
         const rawOwnerCSV = `
@@ -1563,20 +1717,29 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             if (!list.length) { tbody.innerHTML = `<tr><td colspan="${window.isLoggedIn?6:5}" class="p-8 text-center text-slate-400 font-bold">ไม่พบรายการจอง</td></tr>`; return; }
             const groups = list.reduce((g, b) => { if (!g[b.date]) g[b.date] = []; g[b.date].push(b); return g; }, {});
             const sortedDates = Object.keys(groups).sort(); let seq = 1;
+            
             sortedDates.forEach(d => {
                 const bks = groups[d].sort((a,b)=>a.time.localeCompare(b.time));
                 if (tbody.children.length > 0) tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="${window.isLoggedIn?6:5}" class="h-4 border-none bg-transparent"></td></tr>`);
+                
                 bks.forEach((b, idx) => {
-                    const tr = document.createElement('tr'), isP = window.isBookingPast(b);
+                    const tr = document.createElement('tr');
+                    const isP = window.isBookingPast(b);
                     const paid = window.hasSlip(b);
                     const expectedPrice = Number(b.totalPrice) || 0;
                     const scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (paid ? expectedPrice : 0);
                     
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
+                    // --- CORE EVENT LISTENER DELEGATION (This fixes the button issues!) ---
                     tr.onclick = (e) => {
-                        if (e.target.closest('.edit-trigger') && window.isLoggedIn) { window.openEditBookingModal(b.id); return; }
+                        // 1. เช็คว่าคลิกปุ่มแก้ไขหรือไม่
+                        if (e.target.closest('.edit-trigger') && window.isLoggedIn) { 
+                            window.openEditBookingModal(b.id); 
+                            return; 
+                        }
 
+                        // 2. ถ้าเป็น Guest
                         if (!window.isLoggedIn) {
                             const td = e.target.closest('td');
                             const cellIndex = td ? td.cellIndex : -1;
@@ -1584,21 +1747,29 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                             return;
                         }
 
+                        // 3. ตรวจสอบการกดปุ่มต่างๆ (Action buttons)
                         const btn = e.target.closest('button');
                         if (btn) {
-                            if (btn.classList.contains('btn-print') && !btn.disabled) window.printReceipt(b.id);
-                            else if (btn.classList.contains('btn-view-slip')) window.viewSlipFromId(b.id);
-                            else if (btn.classList.contains('btn-upload-slip') && !btn.disabled) window.triggerUploadSlip(b.id);
-                            else if (btn.classList.contains('btn-delete') && !btn.disabled) window.deleteBooking(b.id);
-                            return;
+                            if (btn.classList.contains('btn-print') && !btn.disabled) {
+                                window.printReceipt(b.id);
+                            } else if (btn.classList.contains('btn-view-slip')) {
+                                window.viewSlipFromId(b.id);
+                            } else if (btn.classList.contains('btn-upload-slip') && !btn.disabled) {
+                                window.triggerUploadSlip(b.id);
+                            } else if (btn.classList.contains('btn-delete') && !btn.disabled) {
+                                window.deleteBooking(b.id);
+                            }
+                            return; // กดปุ่มแล้วไม่ต้องทำเงื่อนไขอื่นๆ ต่อ
                         }
                         
+                        // 4. ถ้าคลิกพื้นที่ว่างในตาราง (ที่ไม่ใช่ปุ่ม) ให้ซิงค์เวลา
                         const td = e.target.closest('td');
                         const cellIndex = td ? td.cellIndex : -1;
                         if (cellIndex >= 0 && cellIndex <= 4) {
                             window.syncScheduleToBooking(b, true);
                         }
                     };
+                    // ----------------------------------------------------------------------
                     
                     let statusText = '', badgeBg = '', badgeText = '';
                     if (!paid) {
@@ -1635,10 +1806,20 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     let edH = (!window.isLoggedIn || lockedEdit) ? 
                         `<td class="p-1 md:px-4 md:py-3 border-none cursor-pointer" title="${!window.isLoggedIn ? '' : 'ไม่สามารถแก้ไขได้ (รายการที่จ่ายแล้วต้องแก้ล่วงหน้า 24 ชม. หรือเลยเวลาเล่นแล้ว)'}"><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-500">${dateDisplay} ${window.isLoggedIn ? '<span class="grayscale opacity-50 cursor-not-allowed">✏️</span>' : ''}</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-500 mt-0.5">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>` : 
-                        `<td class="p-1 md:px-4 md:py-3 border-none group" title="${window.adminMode ? 'โหมดผู้ดูแลเปิดใช้งานอยู่' : 'คลิกเพื่อแก้ไขวันและเวลา'}"><div class="font-bold text-[10px] sm:text-sm md:text-base ${window.adminMode?'text-red-600':'text-blue-600'} edit-trigger inline-block cursor-pointer hover:underline">${dateDisplay} ✏️</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-900 cursor-pointer mt-0.5">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>`;
+                        `<td class="p-1 md:px-4 md:py-3 border-none group" title="${window.adminMode ? 'โหมดผู้ดูแลเปิดใช้งานอยู่' : 'คลิกเพื่อแก้ไขวันและเวลา'}"><div class="font-bold text-[10px] sm:text-sm md:text-base ${window.adminMode?'text-red-600':'text-blue-600'} edit-trigger inline-block cursor-pointer hover:underline">${dateDisplay} ✏️</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-900 cursor-pointer mt-0.5 edit-trigger">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>`;
                     
                     const slipCountTxt = window.getSlips(b).length > 1 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">${window.getSlips(b).length}</span>` : '';
-                    let actH = `<td class="p-1 md:px-4 md:py-3 border-none ${!window.isLoggedIn?'hidden':''}"><div class="flex justify-center gap-1">` + (window.isLoggedIn ? `<button class="btn-print p-1 md:p-2 rounded-lg transition-colors ${paid ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-300'}" ${!paid ? 'disabled' : ''} title="พิมพ์ใบเสร็จ"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>` + (paid?`<button class="btn-view-slip relative p-1 md:p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="ดูรูปสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${slipCountTxt}</button>`:`<button class="btn-upload-slip p-1 md:p-2 text-slate-400 hover:text-blue-600 rounded-lg" ${isP && !window.adminMode?'disabled':''} title="อัพโหลดสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></button>`) + `<button class="btn-delete p-1 md:p-2 rounded-lg transition-colors ${isP && !window.adminMode ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'}" ${isP && !window.adminMode?'disabled':''} title="ลบรายการจอง"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` : "") + `</div></td>`;
+                    
+                    // HTML ปุ่ม ถูกสร้างโดยใช้ class เท่านั้น ไม่มี inline onclick ในนี้แล้ว เพื่อป้องกัน Bug
+                    let actH = `<td class="p-1 md:px-4 md:py-3 border-none ${!window.isLoggedIn?'hidden':''}"><div class="flex justify-center gap-1">` + 
+                        (window.isLoggedIn ? 
+                        `<button type="button" class="btn-print p-1 md:p-2 rounded-lg transition-colors ${paid ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-300'}" ${!paid ? 'disabled' : ''} title="พิมพ์ใบเสร็จ"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>` + 
+                        (paid ? 
+                        `<button type="button" class="btn-view-slip relative p-1 md:p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="ดูรูปสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${slipCountTxt}</button>` :
+                        `<button type="button" class="btn-upload-slip p-1 md:p-2 text-slate-400 hover:text-blue-600 rounded-lg" ${isP && !window.adminMode?'disabled':''} title="อัพโหลดสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></button>`
+                        ) + 
+                        `<button type="button" class="btn-delete p-1 md:p-2 rounded-lg transition-colors ${isP && !window.adminMode ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'}" ${isP && !window.adminMode?'disabled':''} title="ลบรายการจอง"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` 
+                        : "") + `</div></td>`;
                     
                     tr.innerHTML = `<td class="p-1 md:px-4 md:py-3 text-center font-bold text-[10px] sm:text-sm md:text-base ${isP?'text-slate-500':'text-slate-900'} border-none">${seq++}</td>` +
                                    `<td class="p-1 md:px-4 md:py-3 border-none"><div class="font-bold text-[9px] sm:text-sm md:text-base font-mono mb-0.5 ${isP?'text-slate-500':'text-slate-900'}">${window.generateRef(b)}</div>${badge}</td>` +
@@ -1649,6 +1830,45 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     tbody.appendChild(tr);
                 });
             });
+        };
+
+        // --- SLIP MODAL NAVIGATION & UPDATE ---
+        window.updateSlipModalView = () => {
+            const img = document.getElementById('slipPreview');
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = window.currentSlipArray[window.currentSlipIndex];
+                img.style.opacity = 1;
+            }, 150);
+            
+            const counter = document.getElementById('slipCounter');
+            const btnPrev = document.getElementById('btnPrevSlip');
+            const btnNext = document.getElementById('btnNextSlip');
+            
+            if (window.currentSlipArray.length > 1) {
+                counter.innerText = `${window.currentSlipIndex + 1} / ${window.currentSlipArray.length}`;
+                counter.classList.remove('hidden');
+                btnPrev.classList.toggle('hidden', window.currentSlipIndex === 0);
+                btnNext.classList.toggle('hidden', window.currentSlipIndex === window.currentSlipArray.length - 1);
+            } else {
+                counter.classList.add('hidden');
+                btnPrev.classList.add('hidden');
+                btnNext.classList.add('hidden');
+            }
+        };
+
+        window.prevSlip = () => {
+            if (window.currentSlipIndex > 0) {
+                window.currentSlipIndex--;
+                window.updateSlipModalView();
+            }
+        };
+
+        window.nextSlip = () => {
+            if (window.currentSlipIndex < window.currentSlipArray.length - 1) {
+                window.currentSlipIndex++;
+                window.updateSlipModalView();
+            }
         };
 
         window.navigateWeek = function(dir) {
@@ -2224,200 +2444,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     window.showAlert(`เพิ่มสลิปเรียบร้อย (รวมทั้งหมด ${existingSlips.length} รูป)`, "success"); 
                 }
             } catch (err) { window.showAlert("อัปโหลดไม่สำเร็จ", "danger"); } finally { e.target.value = ''; window.currentUploadId = null; }
-        };
-
-        window.viewSlipFromId = (id) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            window.currentSlipArray = window.getSlips(b);
-            if(window.currentSlipArray.length > 0) { 
-                window.currentViewingSlipId = id; 
-                window.currentSlipIndex = 0;
-                window.updateSlipModalView();
-                
-                const isP = window.isBookingPast(b); 
-                const btnC = document.getElementById('btnChangeSlipModal');
-                const btnR = document.getElementById('btnRemoveSlipModal'); 
-                const chkM = document.getElementById('modalIsMultipleSlip');
-                
-                if (chkM) {
-                    chkM.checked = !!b.isMultipleBooking;
-                    chkM.disabled = isP && !window.adminMode;
-                }
-                
-                if (isP && !window.adminMode) { 
-                    btnC.style.display = 'none'; 
-                    btnR.style.display = 'none'; 
-                } else { 
-                    btnC.style.display = 'flex'; 
-                    btnR.style.display = 'flex'; 
-                } 
-                document.getElementById('slipModal').classList.add('modal-active'); 
-            } else {
-                window.showAlert("ไม่พบรูปสลิป", "danger"); 
-            }
-        };
-
-        window.toggleMultipleBookingStatus = async (isChecked) => {
-            if (!window.currentViewingSlipId) return;
-            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId));
-            if (!b) return;
-
-            const isP = window.isBookingPast(b);
-            if (isP && !window.adminMode) {
-                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
-                return window.showAlert("❌ ไม่สามารถแก้ไขสถานะรายการในอดีตได้", "danger");
-            }
-
-            try {
-                b.isMultipleBooking = isChecked;
-                await setDoc(doc(collectionRef, String(b.id)), b);
-                window.showAlert("อัปเดตสถานะใบเสร็จเรียบร้อย", "success");
-            } catch(e) {
-                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
-                window.showAlert("อัปเดตสถานะไม่สำเร็จ: " + e.message, "danger");
-            }
-        };
-
-        window.addMoreSlipInModal = async () => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            window.currentUploadId = window.currentViewingSlipId; 
-            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
-            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
-        };
-
-        window.removeCurrentSlipInModal = () => { 
-            if (!window.currentViewingSlipId) return; 
-            window.removeSlip(window.currentViewingSlipId, true); 
-        };
-
-        window.removeSlip = async (id, fromM = false) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            
-            const isLast = window.currentSlipArray.length <= 1;
-            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
-            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
-            if (!confirmed) return; 
-            
-            try { 
-                window.currentSlipArray.splice(window.currentSlipIndex, 1);
-                
-                b.slips = [...window.currentSlipArray];
-                if (b.slip) b.slip = ""; 
-
-                if (b.slips.length === 0) {
-                    b.scannedAmount = 0;
-                } else {
-                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
-                    let newTotal = 0;
-                    for (let slipData of b.slips) {
-                         const amt = Number(await scanSlipAmountWithAI(slipData));
-                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
-                    }
-                    b.scannedAmount = newTotal;
-                }
-                
-                await setDoc(doc(collectionRef, String(b.id)), b); 
-                
-                if (fromM) { 
-                    if (window.currentSlipArray.length === 0) {
-                        window.closeModal(); 
-                        document.getElementById('slipPreview').src = ''; 
-                    } else {
-                        if (window.currentSlipIndex >= window.currentSlipArray.length) {
-                            window.currentSlipIndex = window.currentSlipArray.length - 1;
-                        }
-                        window.updateSlipModalView();
-                    }
-                } 
-                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
-            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
-        };
-
-        window.printWeeklySchedule = () => {
-            const today = window.getThailandDate(); let html = `<div class="p-6 bg-white w-full"><div class="text-center mb-4 border-b border-slate-200 pb-3"><h2 class="text-xl font-black text-slate-800">ตารางการจองสนาม (8 วัน)</h2><p class="text-xs text-slate-500">ข้อมูล ณ วันที่ ${window.formatThaiDate(today)} เวลา ${String(window.getThailandHour()).padStart(2,'0')}:${String(window.getThailandTimeParts().minute).padStart(2,'0')} น.</p></div><div class="flex flex-wrap justify-between items-start w-full">`;
-            for (let i=0; i<=7; i++) {
-                const d = new Date(window.parseLocalDate(today)); d.setDate(d.getDate() + i); const dS = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                const bks = window.allBookingsCache.filter(b => b.date === dS && !b.isCustomerProfile);
-                html += `<div class="w-[49%] mb-4 break-inside-avoid border border-slate-300 rounded-lg overflow-hidden"><h3 class="text-[10px] font-bold bg-slate-100 p-1 text-center border-b border-slate-300">${window.formatThaiDate(dS)}</h3><table class="w-full text-left text-[8px] border-collapse bg-white"><thead><tr class="bg-slate-50 text-slate-500"><th class="border-b border-r p-1 text-center w-8">เวลา</th><th class="border-b border-r p-1 text-center w-1/2">สนาม 1</th><th class="border-b p-1 text-center w-1/2">สนาม 2</th></tr></thead><tbody>`;
-                for(let h=6; h<=20; h++) {
-                    const b1 = bks.find(b => b.court==="สนาม 1" && h>=parseInt(b.time.split(':')[0],10) && h<parseInt(b.time.split(':')[0],10)+Number(b.hours)), b2 = bks.find(b => b.court==="สนาม 2" && h>=parseInt(b.time.split(':')[0],10) && h<parseInt(b.time.split(':')[0],10)+Number(b.hours));
-                    const fS = (b) => !b ? '<div class="text-center text-slate-300">-</div>' : `<div class="flex flex-col pl-1"><span class="font-bold text-slate-800 truncate">${b.customerName}</span><span class="text-[7px] text-slate-500">125/${b.address} <span class="${window.hasSlip(b)?'text-blue-600':'text-orange-600'}">${window.hasSlip(b)?'(จ่าย)':'(ค้าง)'}</span></span></div>`;
-                    html += `<tr class="hover:bg-slate-50"><td class="border-b border-r p-1 text-center font-mono font-bold text-slate-400">${h}:00</td><td class="border-b border-r p-0.5 ${b1?(window.hasSlip(b1)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b1)}</td><td class="border-b p-0.5 ${b2?(window.hasSlip(b2)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b2)}</td></tr>`;
-                }
-                html += `</tbody></table></div>`;
-            }
-            document.getElementById('receiptContent').innerHTML = html + `</div></div>`;
-            document.title = `ตารางจองสนาม_${today}`;
-            document.querySelector('#receiptModal > div').className = 'bg-white max-w-5xl w-full mx-auto relative flex flex-col items-center p-0 md:p-6 shadow-2xl';
-            document.getElementById('receiptModal').classList.add('modal-active');
-        };
-
-        window.openEditBookingModal = (id) => {
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return;
-            const p = window.getThailandTimeParts();
-            const nowDateTime = new Date(p.year, parseInt(p.month,10)-1, p.day, parseInt(p.hour,10), parseInt(p.minute,10), 0);
-            const bStartH = parseInt((b.time||"00:00").split(':')[0], 10);
-            const bookingDateTime = new Date(b.date.split('-')[0], parseInt(b.date.split('-')[1],10)-1, b.date.split('-')[2], bStartH, 0, 0);
-            const diffHours = (bookingDateTime.getTime() - nowDateTime.getTime()) / (1000 * 60 * 60);
-
-            if (window.hasSlip(b) && diffHours < 24 && !window.adminMode) return window.showAlert("❌ ไม่สามารถแก้ไขได้ (รายการที่ชำระเงินแล้วต้องแจ้งล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนเวลาเริ่มเล่น)", "danger");
-
-            document.getElementById('editBookingId').value = b.id;
-            const editDateFp = document.getElementById('editDateInput')._flatpickr; 
-            if (editDateFp) { 
-                if (window.adminMode) {
-                    editDateFp.set('minDate', null); editDateFp.set('disable', []); 
-                } else {
-                    editDateFp.set('minDate', window.getThailandDate());
-                    const maxDateObj = new Date(p.year, parseInt(p.month, 10)-1, p.day); maxDateObj.setDate(maxDateObj.getDate() + 7);
-                    const maxBookingDateStr = `${maxDateObj.getFullYear()}-${String(maxDateObj.getMonth()+1).padStart(2,'0')}-${String(maxDateObj.getDate()).padStart(2,'0')}`;
-                    editDateFp.set('disable', [function(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` > maxBookingDateStr; }]);
-                }
-                editDateFp.setDate(b.date); 
-            }
-            document.getElementById('editCourt').value = b.court;
-            let timeHtml = ''; for(let i=6; i<=20; i++) timeHtml += `<option value="${String(i).padStart(2,'0')}:00">${i}:00 น.</option>`;
-            document.getElementById('editTime').innerHTML = timeHtml; document.getElementById('editTime').value = (b.time||"").padStart(5, '0');
-            window.updateEditHourOptions(); document.getElementById('editHours').value = b.hours;
-            document.getElementById('editBookingModal').classList.add('modal-active');
-        };
-
-        document.getElementById('editBookingForm').onsubmit = async (e) => {
-            e.preventDefault(); const btn = document.querySelector('#editBookingForm button[type="submit"]'); const fd = new FormData(e.target);
-            try {
-                btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
-                const idValue = document.getElementById('editBookingId').value, date = fd.get('date'), court = fd.get('court'), time = fd.get('time'), hours = parseInt(fd.get('hours'), 10), startH = parseInt(time.split(':')[0], 10), weekStr = window.getWeekString(date), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour();
-                
-                if (!window.adminMode && (date < todayThaiStr || (date === todayThaiStr && startH < nowH))) return window.showAlert("❌ เปลี่ยนเป็นเวลาย้อนหลังไม่ได้", "danger");
-                const existing = window.allBookingsCache.find(x => String(x.id) === idValue); if (!existing) return;
-                const cleanAddress = window.normalizeAddress(existing.address);
-
-                if (date > todayThaiStr && !window.adminMode) {
-                    if (window.allBookingsCache.filter(b => String(b.id) !== idValue && window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้าแล้ว`, "danger");
-                }
-
-                const requested = Array.from({length: hours}, (_, i) => startH + i);
-                if (window.allBookingsCache.filter(b => String(b.id) !== idValue && b.date === date && b.court === court).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!", "danger");
-
-                let implicitLightHours = 0, totalPrice = 0;
-                for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
-                
-                existing.date = date; existing.court = court; existing.time = time; existing.hours = hours; existing.lightHours = implicitLightHours; existing.totalPrice = totalPrice; existing.week = weekStr;
-                
-                // ถ้ายอดรวมเปลี่ยน ต้องคำนวณสถานะใหม่
-                if (existing.scannedAmount !== undefined && window.hasSlip(existing)) {
-                    if (existing.scannedAmount < totalPrice) {
-                        // เปลี่ยนสถานะเป็นยอดไม่ครบ
-                    }
-                }
-                
-                await setDoc(doc(collectionRef, String(existing.id)), existing);
-                window.closeEditBookingModal(); 
-                window.syncScheduleToBooking(existing, false); 
-                window.showAlert("แก้ไขวัน-เวลาสำเร็จออนไลน์", "success");
-            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = 'บันทึกการแก้ไข'; }
         };
 
         // --- FIREBASE LOGIC (UPDATED WITH PROFILES) ---
