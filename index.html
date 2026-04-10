@@ -85,7 +85,7 @@
 
     <!-- Hidden Input for Updating Slip / Restore -->
     <input type="file" id="updateSlipInput" class="hidden" accept="image/*" multiple>
-    <input type="file" id="restoreInput" class="hidden" accept=".json" onchange="window.importBackupFile(event)">
+    <input type="file" id="restoreInput" class="hidden" accept=".json">
 
     <div class="max-w-[1400px] mx-auto w-full">
         <!-- Maintenance Warning Banner -->
@@ -133,7 +133,7 @@
                         🔒 ปลดล็อกผู้ดูแล
                     </button>
                 </div>
-                <!-- Login Button (Visible to all) -->
+                <!-- Login Button -->
                 <button id="loginBtn" onclick="window.toggleLogin()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all flex items-center gap-2 shadow-lg mt-2 md:mt-0 w-full md:w-auto justify-center">
                     🔐 เข้าสู่ระบบ (สำหรับจอง)
                 </button>
@@ -377,7 +377,7 @@
         </div>
     </div>
 
-    <!-- Prompt Modal (Custom for iframe compatibility) -->
+    <!-- Prompt Modal -->
     <div id="promptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center mx-2">
             <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -586,150 +586,8 @@
         const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
         const originalDocTitle = document.title;
 
-        // --- OCR AI SCAN FUNCTION ---
-        window.scanSlipAmountWithAI = async function(base64String) {
-            const apiKey = window.geminiKey || "";
-            const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
-            
-            try {
-                const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
-                const prompt = `You are an expert OCR system for Thai bank transfer slips.
-Extract the final transfer amount. Look specifically for the number associated with the keyword "บาท" (Baht) or total amount.
-Ignore account numbers, reference numbers, dates, or available balances.
-Respond strictly in JSON format with a single key "amount" containing the numerical value.
-Example: {"amount": 1500.50}
-If you absolutely cannot find the amount, return {"amount": 0}`;
-                
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); 
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                        generationConfig: { temperature: 0, responseMimeType: "application/json" }
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                    if (text) {
-                        try {
-                            const parsed = JSON.parse(text);
-                            return Number(parsed.amount) || 0;
-                        } catch(e) {
-                            const match = text.replace(/,/g, '').match(/[0-9]+(\.[0-9]+)?/);
-                            if (match) return parseFloat(match[0]);
-                        }
-                    }
-                    return 0;
-                } else if (response.status === 429) {
-                    console.warn("Gemini Rate Limit Exceeded");
-                    return -1; 
-                } else {
-                    console.error("Gemini API Error:", response.status, await response.text());
-                    return -1; 
-                }
-            } catch (err) {
-                console.warn("Gemini Network/Timeout Error:", err.message);
-                return -1; 
-            }
-        };
-
-        // --- GLOBAL FUNCTIONS ---
-        window.customPrompt = function(title) {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('promptModal');
-                document.getElementById('promptTitle').innerText = title;
-                const input = document.getElementById('promptInput');
-                input.value = '';
-                modal.classList.add('modal-active');
-                input.focus();
-
-                const submitHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(input.value); };
-                const cancelHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(null); };
-                const enterKeyHandler = (e) => { if (e.key === 'Enter') submitHandler(); };
-
-                const cleanup = () => {
-                    document.getElementById('promptSubmitBtn').removeEventListener('click', submitHandler);
-                    window.closePromptModal = cancelHandler;
-                    input.removeEventListener('keydown', enterKeyHandler);
-                };
-
-                document.getElementById('promptSubmitBtn').addEventListener('click', submitHandler);
-                window.closePromptModal = cancelHandler;
-                input.addEventListener('keydown', enterKeyHandler);
-            });
-        };
-
-        window.customConfirm = function(text, title="ยืนยันการดำเนินการ?", type="warning") {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('confirmModalGeneric');
-                document.getElementById('confirmTitleGeneric').innerText = title;
-                document.getElementById('confirmTextGeneric').innerText = text;
-                const btn = document.getElementById('confirmActionBtnGeneric');
-                const icon = document.getElementById('confirmIconGeneric');
-                
-                if (type === "danger") {
-                    btn.className = "flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg";
-                    icon.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-red-600 mb-2';
-                } else if (type === "success") {
-                    btn.className = "flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg";
-                    icon.className = "w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-emerald-600 mb-2';
-                } else {
-                    btn.className = "flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg";
-                    icon.className = "w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-slate-800 mb-2';
-                }
-
-                modal.classList.add('modal-active');
-
-                const submitHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(true); };
-                const cancelHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(false); };
-
-                const cleanup = () => {
-                    btn.removeEventListener('click', submitHandler);
-                    window.closeConfirmGeneric = cancelHandler;
-                };
-
-                btn.addEventListener('click', submitHandler);
-                window.closeConfirmGeneric = cancelHandler;
-            });
-        };
-
-        window.showAlert = (msg, type = 'warning') => { 
-            const box = document.getElementById('customAlert'); 
-            const icon = box.querySelector('svg');
-            
-            box.className = 'text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] md:w-auto max-w-sm fixed top-4 right-4 md:top-6 md:right-6 z-[9999] transition-all';
-            if (type === 'success') { box.classList.add('bg-emerald-600'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'; } 
-            else if (type === 'danger' || type === 'error') { box.classList.add('bg-red-600'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'; } 
-            else { box.classList.add('bg-slate-800'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'; }
-            
-            box.querySelector('span').innerText = msg; 
-            box.style.display = 'flex'; 
-            setTimeout(() => box.style.display = 'none', 4000); 
-        };
-
-        window.closeModal = () => { document.querySelectorAll('.fixed').forEach(m => m.classList.remove('modal-active')); document.title = originalDocTitle; window.currentUploadId = null; };
-        window.closeEditBookingModal = () => { document.getElementById('editBookingModal').classList.remove('modal-active'); };
-        window.openBackupModal = () => { document.getElementById('backupModal').classList.add('modal-active'); };
-        window.closeMaintenanceModal = () => { document.getElementById('autoMaintenanceModal').classList.remove('modal-active'); };
-        window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); }; 
-
         window.houseOwnerDB = {};
-        const rawOwnerCSV = `
-125/1,สิทธิชัย เรืองศิรินุสรณ์
+        const rawOwnerCSV = `125/1,สิทธิชัย เรืองศิรินุสรณ์
 125/2,วัฒน์ชัย มิ่งบรรเจิดสุข
 125/3,ประวิทย์ ชวตานนท์
 125/4,จิรัญญา อัสนี
@@ -1179,8 +1037,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 125/448,นพ.ไชยพร  ส่งประเสริฐเจริญ
 125/449,คุณพงศ์ภัทร อะสีติรัตน์
 125/450,คุณณัฐฐณัณ พิมทะโนทัย
-125/451,คุณคุณธรรม  ประสิทธิ์รัฐสินธุ์
-`;
+125/451,คุณคุณธรรม  ประสิทธิ์รัฐสินธุ์`;
 
         rawOwnerCSV.trim().split('\n').forEach(line => {
             const parts = line.includes('\t') ? line.split('\t') : line.split(',');
@@ -1191,7 +1048,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             }
         });
 
-        // --- TIME UTILITIES ---
+        // --- 1. GLOBAL UTILITIES ---
         window.getThailandTimeParts = function() {
             const p = new Intl.DateTimeFormat('en-GB', {timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false}).formatToParts(new Date());
             const r = {}; p.forEach(v => r[v.type] = v.value); if (r.hour === "24") r.hour = "00"; return r;
@@ -1225,7 +1082,93 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             return window.getSlips(b).length > 0;
         };
 
-        // --- FORM HELPERS ---
+        // --- 2. MODALS AND ALERTS ---
+        window.customPrompt = function(title) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('promptModal');
+                document.getElementById('promptTitle').innerText = title;
+                const input = document.getElementById('promptInput');
+                input.value = '';
+                modal.classList.add('modal-active');
+                input.focus();
+
+                const submitHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(input.value); };
+                const cancelHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(null); };
+                const enterKeyHandler = (e) => { if (e.key === 'Enter') submitHandler(); };
+
+                const cleanup = () => {
+                    document.getElementById('promptSubmitBtn').removeEventListener('click', submitHandler);
+                    window.closePromptModal = cancelHandler;
+                    input.removeEventListener('keydown', enterKeyHandler);
+                };
+
+                document.getElementById('promptSubmitBtn').addEventListener('click', submitHandler);
+                window.closePromptModal = cancelHandler;
+                input.addEventListener('keydown', enterKeyHandler);
+            });
+        };
+
+        window.customConfirm = function(text, title="ยืนยันการดำเนินการ?", type="warning") {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModalGeneric');
+                document.getElementById('confirmTitleGeneric').innerText = title;
+                document.getElementById('confirmTextGeneric').innerText = text;
+                const btn = document.getElementById('confirmActionBtnGeneric');
+                const icon = document.getElementById('confirmIconGeneric');
+                
+                if (type === "danger") {
+                    btn.className = "flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg";
+                    icon.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
+                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-red-600 mb-2';
+                } else if (type === "success") {
+                    btn.className = "flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg";
+                    icon.className = "w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4";
+                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-emerald-600 mb-2';
+                } else {
+                    btn.className = "flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg";
+                    icon.className = "w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4";
+                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-slate-800 mb-2';
+                }
+
+                modal.classList.add('modal-active');
+
+                const submitHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(true); };
+                const cancelHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(false); };
+
+                const cleanup = () => {
+                    btn.removeEventListener('click', submitHandler);
+                    window.closeConfirmGeneric = cancelHandler;
+                };
+
+                btn.addEventListener('click', submitHandler);
+                window.closeConfirmGeneric = cancelHandler;
+            });
+        };
+
+        window.showAlert = (msg, type = 'warning') => { 
+            const box = document.getElementById('customAlert'); 
+            const icon = box.querySelector('svg');
+            
+            box.className = 'text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] md:w-auto max-w-sm fixed top-4 right-4 md:top-6 md:right-6 z-[9999] transition-all';
+            if (type === 'success') { box.classList.add('bg-emerald-600'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'; } 
+            else if (type === 'danger' || type === 'error') { box.classList.add('bg-red-600'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'; } 
+            else { box.classList.add('bg-slate-800'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'; }
+            
+            box.querySelector('span').innerText = msg; 
+            box.style.display = 'flex'; 
+            setTimeout(() => box.style.display = 'none', 4000); 
+        };
+
+        window.closeModal = () => { document.querySelectorAll('.fixed').forEach(m => m.classList.remove('modal-active')); document.title = originalDocTitle; window.currentUploadId = null; };
+        window.closeEditBookingModal = () => { document.getElementById('editBookingModal').classList.remove('modal-active'); };
+        window.openBackupModal = () => { document.getElementById('backupModal').classList.add('modal-active'); };
+        window.closeMaintenanceModal = () => { document.getElementById('autoMaintenanceModal').classList.remove('modal-active'); };
+        window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); }; 
+
+        // --- 3. FORM AND FIELD FILLERS ---
         window.updateHourOptions = function() {
             const el = document.getElementById('timeSelect'); if(!el.value) return;
             const start = parseInt(el.value.split(':')[0], 10);
@@ -1253,15 +1196,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         };
 
         window.normalizeAddress = (addr) => String(addr || "").trim().replace(/^125\//, '').replace(/\s+/g, '').toLowerCase();
-
-        window.openExportModal = () => {
-            const todayStr = window.getThailandDate();
-            if (!document.getElementById('exportStartDate')._flatpickr) {
-                flatpickr("#exportStartDate", { locale: 'th', altInput: true, altFormat: "j M Y", dateFormat: "Y-m-d", defaultDate: todayStr, disableMobile: true });
-                flatpickr("#exportEndDate", { locale: 'th', altInput: true, altFormat: "j M Y", dateFormat: "Y-m-d", defaultDate: todayStr, disableMobile: true });
-            }
-            document.getElementById('exportExcelModal').classList.add('modal-active');
-        };
 
         window.updateFileName = (input) => {
             const span = document.getElementById('slipFileName');
@@ -1296,14 +1230,11 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         window.autoFillFromAddress = (val) => {
             if (!val) return; const addr = window.normalizeAddress(val);
             document.getElementById('inputAddress').value = addr; window.fillOwnerFields(window.houseOwnerDB[addr] || '');
-            
             let match = window.customerProfiles.find(p => window.normalizeAddress(p.address) === addr);
-            
             if (!match) {
                 const hist = window.allBookingsCache.filter(b => window.normalizeAddress(b.address) === addr).sort((a,b)=> (b.timestamp||0)-(a.timestamp||0));
                 if (hist.length > 0) match = hist[0];
             }
-            
             if (match) { document.getElementById('inputName').value = match.customerName || ''; document.getElementById('inputPhone').value = match.phoneNumber || ''; } 
             else { document.getElementById('inputName').value = ''; document.getElementById('inputPhone').value = ''; }
         };
@@ -1311,16 +1242,84 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         window.autoFillFromPhone = (val) => {
             if (val && val.length === 10) {
                 let match = window.customerProfiles.find(p => p.phoneNumber === val);
-                
                 if (!match) {
                     match = window.allBookingsCache.find(b => b.phoneNumber === val);
                 }
-                
                 if (match && match.address) { document.getElementById('inputAddress').value = window.normalizeAddress(match.address); window.autoFillFromAddress(match.address); }
             }
         };
 
-        // --- AUTH & ADMIN MODES ---
+        // --- 4. OCR AI SCAN FUNCTION ---
+        window.scanSlipAmountWithAI = async function(base64String) {
+            const apiKey = window.geminiKey || "";
+            const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            
+            try {
+                const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
+                const prompt = `You are an expert OCR system for Thai bank transfer slips.
+Extract the final transfer amount. Look specifically for the number associated with the keyword "บาท" (Baht) or total amount.
+Ignore account numbers, reference numbers, dates, or available balances.
+Respond strictly in JSON format with a single key "amount" containing the numerical value.
+Example: {"amount": 1500.50}
+If you absolutely cannot find the amount, return {"amount": 0}`;
+                
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); 
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
+                        generationConfig: { temperature: 0, responseMimeType: "application/json" }
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                    if (text) {
+                        try {
+                            const parsed = JSON.parse(text);
+                            return Number(parsed.amount) || 0;
+                        } catch(e) {
+                            const match = text.replace(/,/g, '').match(/[0-9]+(\.[0-9]+)?/);
+                            if (match) return parseFloat(match[0]);
+                        }
+                    }
+                    return 0;
+                } else if (response.status === 429 || response.status === 503) {
+                    console.warn(`Gemini API Busy or Rate Limited (Status: ${response.status})`);
+                    return -1; 
+                } else {
+                    console.error("Gemini API Error:", response.status, await response.text());
+                    return -1; 
+                }
+            } catch (err) {
+                console.warn("Gemini Network/Timeout Error:", err.message);
+                return -1; 
+            }
+        };
+
+        window.compressImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader(); reader.onerror = () => reject(new Error("อ่านไฟล์ไม่ได้")); reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image(); img.onerror = () => reject(new Error("ไฟล์ไม่ใช่รูปภาพ")); img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas'); const MAX = 1000; let w = img.width, h = img.height;
+                        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); 
+                        resolve(canvas.toDataURL('image/jpeg', 0.85)); 
+                    };
+                };
+            });
+        };
+
+        // --- 5. AUTHENTICATION & LOGIN ---
         window.toggleLogin = function() {
             if (window.isLoggedIn) { 
                 window.isLoggedIn = window.adminMode = false; 
@@ -1434,7 +1433,53 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             }
         };
 
-        // --- RENDER CORE ---
+        // --- 6. NAVIGATION & SCHEDULING ---
+        window.navigateWeek = function(dir) {
+            const today = window.getThailandDate(), realW = window.getWeekString(today), dReal = window.getStartOfWeek(realW), dMax = new Date(dReal); dMax.setDate(dMax.getDate() + 7); const maxW = window.getWeekString(dMax);
+            const dTar = window.getStartOfWeek(window.currentFilterWeek); dTar.setDate(dTar.getDate() + (dir * 7)); const tarW = window.getWeekString(dTar);
+            if (!window.isLoggedIn) { 
+                if (tarW < realW) return window.showAlert("ผู้เยี่ยมชมไม่สามารถดูย้อนหลังได้"); 
+                if (tarW > maxW) return window.showAlert("ผู้เยี่ยมชมสามารถดูตารางล่วงหน้าได้ถึงสัปดาห์หน้าเท่านั้น"); 
+            }
+            window.currentFilterWeek = tarW; window.updateWeekLabel(); const fp = document.getElementById('scheduleDateInput')?._flatpickr; 
+            if (fp) {
+                const tzStr = `${dTar.getFullYear()}-${String(dTar.getMonth()+1).padStart(2,'0')}-${String(dTar.getDate()).padStart(2,'0')}`;
+                fp.setDate(tzStr, false); 
+            }
+            window.renderAll();
+        };
+
+        window.goToCurrentWeek = function() { 
+            const today = window.getThailandDate(); window.currentFilterWeek = window.getWeekString(today); window.updateWeekLabel();
+            const fp = document.getElementById('scheduleDateInput')?._flatpickr; if (fp) fp.setDate(today, false); window.renderAll(); 
+        };
+
+        window.syncDateToSchedule = function() { const d = document.getElementById('dateInput').value; window.currentFilterWeek = window.getWeekString(d); window.updateWeekLabel(); window.renderAll(); };
+        
+        window.syncScheduleToBooking = function(b, shouldScroll = true) { 
+            window.highlightedBookingId = b.id; 
+            const fp = document.getElementById('scheduleDateInput')?._flatpickr; 
+            if(fp) fp.setDate(b.date, false); 
+            window.renderSchedule(); 
+            
+            if (shouldScroll) {
+                setTimeout(() => {
+                    const schedulePanel = document.getElementById('scheduleGridBody').closest('.glass-panel');
+                    if (schedulePanel) { schedulePanel.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                }, 50);
+            }
+        };
+        
+        window.updateWeekLabel = function() { 
+            const d = window.getStartOfWeek(window.currentFilterWeek); 
+            const display = document.getElementById('weekDisplay'); 
+            if (display) {
+                const tzStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                display.innerText = `อาทิตย์ที่: ${window.formatThaiDate(tzStr)}`; 
+            }
+        };
+
+        // --- 7. RENDER LOGIC ---
         window.renderSchedule = function() {
             const date = document.getElementById('scheduleDateInput').value; if (!date) return;
             const today = window.getThailandDate(), nowH = window.getThailandHour(), tbody = document.getElementById('scheduleGridBody'); tbody.innerHTML = '';
@@ -1454,15 +1499,10 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         
                         let cls = 'slot-booked';
                         if (hasSlip) {
-                            if (fin) {
-                                cls = 'slot-played';
-                            } else if (scannedPrice < expectedPrice) {
-                                cls = 'slot-underpaid';
-                            } else if (scannedPrice > expectedPrice && !b.isMultipleBooking) {
-                                cls = 'slot-overpaid';
-                            } else {
-                                cls = 'slot-paid';
-                            }
+                            if (fin) { cls = 'slot-played'; } 
+                            else if (scannedPrice < expectedPrice) { cls = 'slot-underpaid'; } 
+                            else if (scannedPrice > expectedPrice && !b.isMultipleBooking) { cls = 'slot-overpaid'; } 
+                            else { cls = 'slot-paid'; }
                         }
                         
                         td.innerHTML = `<div class="rounded py-1 md:py-2 text-[10px] md:text-xs font-bold ${cls} ${exc} flex flex-col justify-center items-center leading-tight min-w-0 w-full overflow-hidden"><span class="truncate w-full text-center px-1">${b.customerName}</span><span class="text-[8px] md:text-[10px] font-medium opacity-90 mt-0.5">125/${b.address}</span></div>`;
@@ -1563,7 +1603,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     let edH = (!window.isLoggedIn || lockedEdit) ? 
                         `<td class="p-1 md:px-4 md:py-3 border-none cursor-pointer" title="${!window.isLoggedIn ? '' : 'ไม่สามารถแก้ไขได้ (รายการที่จ่ายแล้วต้องแก้ล่วงหน้า 24 ชม. หรือเลยเวลาเล่นแล้ว)'}"><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-500">${dateDisplay} ${window.isLoggedIn ? '<span class="grayscale opacity-50 cursor-not-allowed">✏️</span>' : ''}</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-500 mt-0.5">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>` : 
-                        `<td class="p-1 md:px-4 md:py-3 border-none group" title="${window.adminMode ? 'โหมดผู้ดูแลเปิดใช้งานอยู่' : 'คลิกเพื่อแก้ไขวันและเวลา'}"><div class="font-bold text-[10px] sm:text-sm md:text-base ${window.adminMode?'text-red-600':'text-blue-600'} inline-block cursor-pointer hover:underline" onclick="event.stopPropagation(); window.openEditBookingModal('${b.id}')">${dateDisplay} ✏️</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-900 cursor-pointer mt-0.5" onclick="event.stopPropagation(); window.openEditBookingModal('${b.id}')">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>`;
+                        `<td class="p-1 md:px-4 md:py-3 border-none group" title="${window.adminMode ? 'โหมดผู้ดูแลเปิดใช้งานอยู่' : 'คลิกเพื่อแก้ไขวันและเวลา'}"><div class="font-bold text-[10px] sm:text-sm md:text-base ${window.adminMode?'text-red-600':'text-blue-600'} inline-block cursor-pointer hover:underline" onclick="event.stopPropagation(); window.openEditBookingModal('${b.id}')">${dateDisplay} ✏️</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-900 cursor-pointer mt-0.5 edit-trigger" onclick="event.stopPropagation(); window.openEditBookingModal('${b.id}')">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>`;
                     
                     const slipCountTxt = window.getSlips(b).length > 1 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">${window.getSlips(b).length}</span>` : '';
                     
@@ -1588,204 +1628,216 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             });
         };
 
-        window.navigateWeek = function(dir) {
-            const today = window.getThailandDate(), realW = window.getWeekString(today), dReal = window.getStartOfWeek(realW), dMax = new Date(dReal); dMax.setDate(dMax.getDate() + 7); const maxW = window.getWeekString(dMax);
-            const dTar = window.getStartOfWeek(window.currentFilterWeek); dTar.setDate(dTar.getDate() + (dir * 7)); const tarW = window.getWeekString(dTar);
-            if (!window.isLoggedIn) { 
-                if (tarW < realW) return window.showAlert("ผู้เยี่ยมชมไม่สามารถดูย้อนหลังได้"); 
-                if (tarW > maxW) return window.showAlert("ผู้เยี่ยมชมสามารถดูตารางล่วงหน้าได้ถึงสัปดาห์หน้าเท่านั้น"); 
-            }
-            window.currentFilterWeek = tarW; window.updateWeekLabel(); const fp = document.getElementById('scheduleDateInput')?._flatpickr; 
-            if (fp) {
-                const tzStr = `${dTar.getFullYear()}-${String(dTar.getMonth()+1).padStart(2,'0')}-${String(dTar.getDate()).padStart(2,'0')}`;
-                fp.setDate(tzStr, false); 
-            }
-            window.renderAll();
-        };
-
-        window.goToCurrentWeek = function() { 
-            const today = window.getThailandDate(); window.currentFilterWeek = window.getWeekString(today); window.updateWeekLabel();
-            const fp = document.getElementById('scheduleDateInput')?._flatpickr; if (fp) fp.setDate(today, false); window.renderAll(); 
-        };
-
-        window.syncDateToSchedule = function() { const d = document.getElementById('dateInput').value; window.currentFilterWeek = window.getWeekString(d); window.updateWeekLabel(); window.renderAll(); };
-        
-        window.syncScheduleToBooking = function(b, shouldScroll = true) { 
-            window.highlightedBookingId = b.id; 
-            const fp = document.getElementById('scheduleDateInput')?._flatpickr; 
-            if(fp) fp.setDate(b.date, false); 
-            window.renderSchedule(); 
+        // --- 8. SLIP MANAGEMENT & MODALS ---
+        window.updateSlipModalView = () => {
+            const img = document.getElementById('slipPreview');
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = window.currentSlipArray[window.currentSlipIndex];
+                img.style.opacity = 1;
+            }, 150);
             
-            if (shouldScroll) {
-                setTimeout(() => {
-                    const schedulePanel = document.getElementById('scheduleGridBody').closest('.glass-panel');
-                    if (schedulePanel) {
-                        schedulePanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 50);
-            }
-        };
-        
-        window.updateWeekLabel = function() { 
-            const d = window.getStartOfWeek(window.currentFilterWeek); 
-            const display = document.getElementById('weekDisplay'); 
-            if (display) {
-                const tzStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                display.innerText = `อาทิตย์ที่: ${window.formatThaiDate(tzStr)}`; 
-            }
-        };
-
-        // --- AUTO MAINTENANCE SYSTEM (QUARTERLY) ---
-        
-        window.updateMaintenanceWarning = function() {
-            const p = window.getThailandTimeParts();
-            const y = parseInt(p.year, 10);
-            const m = parseInt(p.month, 10);
+            const counter = document.getElementById('slipCounter');
+            const btnPrev = document.getElementById('btnPrevSlip');
+            const btnNext = document.getElementById('btnNextSlip');
             
-            let currentQ = Math.ceil(m / 3);
-            let prevQ = currentQ - 1;
-            let prevYear = y;
-            if (prevQ === 0) {
-                prevQ = 4;
-                prevYear = y - 1;
-            }
-
-            const flagKey = `makmai_maintenance_done_${prevYear}_Q${prevQ}`;
-            const banner = document.getElementById('maintenanceWarningBanner');
-            if (!banner) return;
-            
-            if (!safeStorage.getItem(flagKey)) {
-                const cutoffMonth = (currentQ - 1) * 3 + 1;
-                const cutoffDateStr = `${y}-${String(cutoffMonth).padStart(2, '0')}-01`;
-                const oldRecords = window.allBookingsCache.filter(b => b.date < cutoffDateStr && !b.isCustomerProfile);
-                
-                if (oldRecords.length > 0) {
-                    banner.classList.remove('hidden');
-                } else {
-                    banner.classList.add('hidden');
-                }
+            if (window.currentSlipArray.length > 1) {
+                counter.innerText = `${window.currentSlipIndex + 1} / ${window.currentSlipArray.length}`;
+                counter.classList.remove('hidden');
+                btnPrev.classList.toggle('hidden', window.currentSlipIndex === 0);
+                btnNext.classList.toggle('hidden', window.currentSlipIndex === window.currentSlipArray.length - 1);
             } else {
-                banner.classList.add('hidden');
+                counter.classList.add('hidden');
+                btnPrev.classList.add('hidden');
+                btnNext.classList.add('hidden');
             }
         };
 
-        window.checkAutoMaintenance = function() {
-            if (!window.adminMode) return; 
+        window.prevSlip = () => {
+            if (window.currentSlipIndex > 0) {
+                window.currentSlipIndex--;
+                window.updateSlipModalView();
+            }
+        };
 
+        window.nextSlip = () => {
+            if (window.currentSlipIndex < window.currentSlipArray.length - 1) {
+                window.currentSlipIndex++;
+                window.updateSlipModalView();
+            }
+        };
+
+        window.openEditBookingModal = (id) => {
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return;
             const p = window.getThailandTimeParts();
-            const y = parseInt(p.year, 10);
-            const m = parseInt(p.month, 10);
-            
-            let currentQ = Math.ceil(m / 3);
-            let prevQ = currentQ - 1;
-            let prevYear = y;
-            if (prevQ === 0) {
-                prevQ = 4;
-                prevYear = y - 1;
-            }
+            const nowDateTime = new Date(p.year, parseInt(p.month,10)-1, p.day, parseInt(p.hour,10), parseInt(p.minute,10), 0);
+            const bStartH = parseInt((b.time||"00:00").split(':')[0], 10);
+            const bookingDateTime = new Date(b.date.split('-')[0], parseInt(b.date.split('-')[1],10)-1, b.date.split('-')[2], bStartH, 0, 0);
+            const diffHours = (bookingDateTime.getTime() - nowDateTime.getTime()) / (1000 * 60 * 60);
 
-            const flagKey = `makmai_maintenance_done_${prevYear}_Q${prevQ}`;
-            
-            if (!safeStorage.getItem(flagKey)) {
-                const cutoffMonth = (currentQ - 1) * 3 + 1;
-                const cutoffDateStr = `${y}-${String(cutoffMonth).padStart(2, '0')}-01`;
-                
-                const oldRecords = window.allBookingsCache.filter(b => b.date < cutoffDateStr && !b.isCustomerProfile);
-                
-                if (oldRecords.length > 0) {
-                    window.pendingMaintenance = {
-                        flagKey: flagKey,
-                        title: `ไตรมาส ${prevQ}_${prevYear}`,
-                        records: oldRecords
-                    };
-                    document.getElementById('maintenanceTitle').innerText = `ถึงรอบสำรองข้อมูล ${window.pendingMaintenance.title}`;
-                    document.getElementById('maintenanceCount').innerText = `${oldRecords.length} รายการ`;
-                    document.getElementById('autoMaintenanceModal').classList.add('modal-active');
+            if (window.hasSlip(b) && diffHours < 24 && !window.adminMode) return window.showAlert("❌ ไม่สามารถแก้ไขได้ (รายการที่ชำระเงินแล้วต้องแจ้งล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนเวลาเริ่มเล่น)", "danger");
+
+            document.getElementById('editBookingId').value = b.id;
+            const editDateFp = document.getElementById('editDateInput')._flatpickr; 
+            if (editDateFp) { 
+                if (window.adminMode) {
+                    editDateFp.set('minDate', null); editDateFp.set('disable', []); 
                 } else {
-                    safeStorage.setItem(flagKey, 'true');
+                    editDateFp.set('minDate', window.getThailandDate());
+                    const maxDateObj = new Date(p.year, parseInt(p.month, 10)-1, p.day); maxDateObj.setDate(maxDateObj.getDate() + 7);
+                    const maxBookingDateStr = `${maxDateObj.getFullYear()}-${String(maxDateObj.getMonth()+1).padStart(2,'0')}-${String(maxDateObj.getDate()).padStart(2,'0')}`;
+                    editDateFp.set('disable', [function(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` > maxBookingDateStr; }]);
                 }
+                editDateFp.setDate(b.date); 
+            }
+            document.getElementById('editCourt').value = b.court;
+            let timeHtml = ''; for(let i=6; i<=20; i++) timeHtml += `<option value="${String(i).padStart(2,'0')}:00">${i}:00 น.</option>`;
+            document.getElementById('editTime').innerHTML = timeHtml; document.getElementById('editTime').value = (b.time||"").padStart(5, '0');
+            window.updateEditHourOptions(); document.getElementById('editHours').value = b.hours;
+            document.getElementById('editBookingModal').classList.add('modal-active');
+        };
+
+        window.triggerUploadSlip = (id) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            window.currentUploadId = id; 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
+        };
+
+        window.viewSlipFromId = (id) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            window.currentSlipArray = window.getSlips(b);
+            if(window.currentSlipArray.length > 0) { 
+                window.currentViewingSlipId = id; 
+                window.currentSlipIndex = 0;
+                window.updateSlipModalView();
+                
+                const isP = window.isBookingPast(b); 
+                const btnC = document.getElementById('btnChangeSlipModal');
+                const btnR = document.getElementById('btnRemoveSlipModal'); 
+                const chkM = document.getElementById('modalIsMultipleSlip');
+                
+                if (chkM) {
+                    chkM.checked = !!b.isMultipleBooking;
+                    chkM.disabled = isP && !window.adminMode;
+                }
+                
+                if (isP && !window.adminMode) { 
+                    btnC.style.display = 'none'; 
+                    btnR.style.display = 'none'; 
+                } else { 
+                    btnC.style.display = 'flex'; 
+                    btnR.style.display = 'flex'; 
+                } 
+                document.getElementById('slipModal').classList.add('modal-active'); 
+            } else {
+                window.showAlert("ไม่พบรูปสลิป", "danger"); 
             }
         };
 
-        window.executeAutoMaintenance = async function() {
-            const btn = document.getElementById('btnStartMaintenance');
-            btn.disabled = true;
-            
-            const records = window.pendingMaintenance.records;
-            
-            let minDate = records[0].date;
-            let maxDate = records[0].date;
-            records.forEach(b => {
-                if (b.date < minDate) minDate = b.date;
-                if (b.date > maxDate) maxDate = b.date;
-            });
-            const fileSuffix = `${minDate}_ถึง_${maxDate}`;
+        window.toggleMultipleBookingStatus = async (isChecked) => {
+            if (!window.currentViewingSlipId) return;
+            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId));
+            if (!b) return;
+
+            const isP = window.isBookingPast(b);
+            if (isP && !window.adminMode) {
+                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
+                return window.showAlert("❌ ไม่สามารถแก้ไขสถานะรายการในอดีตได้", "danger");
+            }
 
             try {
-                // 1. Export Excel
-                btn.innerText = "กำลังโหลด Excel... (1/3)";
-                const excelData = records.sort((a,b) => {
-                    if (a.date !== b.date) return a.date.localeCompare(b.date);
-                    return a.time.localeCompare(b.time);
-                }).map((b, i) => {
-                    const hasSlip = window.hasSlip(b);
-                    const exp = Number(b.totalPrice)||0;
-                    const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
-                    let status = 'ชำระแล้ว';
-                    if (!hasSlip) status = 'ค้างชำระ';
-                    else if (scn < exp) status = 'ยอดไม่ครบ';
-                    else if (scn > exp && !b.isMultipleBooking) status = 'ชำระเกิน';
-                    
-                    return { 
-                        'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 
-                        'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 
-                        'ยอดรวม (บาท)': exp, 'ยอดโอนจริง (บาท)': hasSlip ? scn : 0, 'สถานะ': status 
-                    };
-                });
-                const ws = XLSX.utils.json_to_sheet(excelData);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Archive");
-                
-                XLSX.writeFile(wb, `Makmai_Backup_Excel_${fileSuffix}.xlsx`);
-
-                await new Promise(r => setTimeout(r, 1500));
-
-                // 2. Export JSON
-                btn.innerText = "กำลังโหลด JSON... (2/3)";
-                const jsonBlob = new Blob([JSON.stringify(records, null, 2)], {type: "application/json"});
-                const jsonUrl = URL.createObjectURL(jsonBlob);
-                const a = document.createElement('a');
-                a.href = jsonUrl;
-                
-                a.download = `Makmai_Backup_JSON_${fileSuffix}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(jsonUrl);
-
-                await new Promise(r => setTimeout(r, 1500));
-
-                // 3. Cleanup Online DB
-                btn.innerText = "กำลังลบข้อมูลเก่า... (3/3)";
-                for (const b of records) {
-                    await deleteDoc(doc(collectionRef, String(b.id)));
-                }
-
-                safeStorage.setItem(window.pendingMaintenance.flagKey, 'true');
-                window.closeMaintenanceModal();
-                window.updateMaintenanceWarning();
-                window.showAlert("✅ การบำรุงรักษาฐานข้อมูลเสร็จสมบูรณ์เรียบร้อยแล้ว", "success");
-                
+                b.isMultipleBooking = isChecked;
+                await setDoc(doc(collectionRef, String(b.id)), b);
+                window.showAlert("อัปเดตสถานะใบเสร็จเรียบร้อย", "success");
             } catch(e) {
-                console.error(e);
-                window.showAlert("❌ เกิดข้อผิดพลาด: " + e.message, "danger");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "เริ่มดำเนินการ";
+                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
+                window.showAlert("อัปเดตสถานะไม่สำเร็จ: " + e.message, "danger");
             }
         };
 
-        // --- EXPORT, REPORT, PRINT, & BACKUP LOGIC ---
+        window.addMoreSlipInModal = async () => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            window.currentUploadId = window.currentViewingSlipId; 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
+        };
+
+        window.removeCurrentSlipInModal = () => { 
+            if (!window.currentViewingSlipId) return; 
+            window.removeSlip(window.currentViewingSlipId, true); 
+        };
+
+        window.removeSlip = async (id, fromM = false) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            
+            const isLast = window.currentSlipArray.length <= 1;
+            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
+            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
+            if (!confirmed) return; 
+            
+            try { 
+                window.currentSlipArray.splice(window.currentSlipIndex, 1);
+                
+                b.slips = [...window.currentSlipArray];
+                if (b.slip) b.slip = ""; 
+
+                if (b.slips.length === 0) {
+                    b.scannedAmount = 0;
+                } else {
+                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
+                    let newTotal = 0;
+                    for (let slipData of b.slips) {
+                         const amt = Number(await window.scanSlipAmountWithAI(slipData));
+                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
+                    }
+                    b.scannedAmount = newTotal;
+                }
+                
+                await setDoc(doc(collectionRef, String(b.id)), b); 
+                
+                if (fromM) { 
+                    if (window.currentSlipArray.length === 0) {
+                        window.closeModal(); 
+                        document.getElementById('slipPreview').src = ''; 
+                    } else {
+                        if (window.currentSlipIndex >= window.currentSlipArray.length) {
+                            window.currentSlipIndex = window.currentSlipArray.length - 1;
+                        }
+                        window.updateSlipModalView();
+                    }
+                } 
+                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
+            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
+        };
+
+        window.deleteBooking = async (id) => {
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id));
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบรายการในอดีตไม่ได้ (ต้องเปิดโหมดแอดมิน)", "danger");
+            const confirmed = await window.customConfirm("คุณแน่ใจว่าต้องการลบรายการจองนี้? ข้อมูลจะไม่สามารถกู้คืนได้", "ยืนยันการลบ?", "danger");
+            if (!confirmed) return;
+            try {
+                await deleteDoc(doc(collectionRef, String(id)));
+                window.showAlert("🗑️ ลบข้อมูลเรียบร้อย", "success");
+            } catch (err) {
+                console.error(err);
+                window.showAlert("❌ ลบข้อมูลไม่สำเร็จ", "danger");
+            }
+        };
+
+        // --- 9. EXPORT, REPORT, PRINT & MAINTENANCE ---
+        window.openExportModal = () => {
+            const todayStr = window.getThailandDate();
+            if (!document.getElementById('exportStartDate')._flatpickr) {
+                flatpickr("#exportStartDate", { locale: 'th', altInput: true, altFormat: "j M Y", dateFormat: "Y-m-d", defaultDate: todayStr, disableMobile: true });
+                flatpickr("#exportEndDate", { locale: 'th', altInput: true, altFormat: "j M Y", dateFormat: "Y-m-d", defaultDate: todayStr, disableMobile: true });
+            }
+            document.getElementById('exportExcelModal').classList.add('modal-active');
+        };
+
         window.executeExcelExport = () => {
             const sd = document.getElementById('exportStartDate').value, ed = document.getElementById('exportEndDate').value;
             if (!sd || !ed) return window.showAlert("กรุณาเลือกช่วงวันที่"); if (sd > ed) return window.showAlert("วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด");
@@ -1802,7 +1854,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             const data = window.allBookingsCache.filter(b => b.date >= sd && b.date <= ed && !b.isCustomerProfile).sort((a,b)=>a.date!==b.date?a.date.localeCompare(b.date):a.time.localeCompare(b.time)).map((b, i) => ({ 'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 'เจ้าของแปลง': b.ownerName||'-', 'เบอร์โทร': b.phoneNumber||'-', 'ยอดรวม (บาท)': b.totalPrice, 'ยอดโอนจริง (บาท)': (b.scannedAmount !== undefined ? b.scannedAmount : (window.hasSlip(b)?b.totalPrice:0)), 'สถานะ': getStatusTxt(b), 'อ้างอิง': window.generateRef(b) }));
             if (!data.length) return window.showAlert("ไม่พบข้อมูลในช่วงที่เลือก");
             XLSX.writeFile({SheetNames:["Bookings"], Sheets:{Bookings:XLSX.utils.json_to_sheet(data)}}, `Makmai_Tennis_Report_${sd}_to_${ed}.xlsx`);
-            window.closeModal(); window.showAlert("ดาวน์โหลด Excel สำเร็จ");
+            window.closeModal(); window.showAlert("ดาวน์โหลด Excel สำเร็จ", "success");
         };
 
         window.openReportModal = () => {
@@ -1872,12 +1924,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                      type: 'bar', 
                      data: { 
                          labels: thaiMonths, 
-                         datasets: [{ 
-                             label: 'รายได้ (บาท)', 
-                             data: mTH.map((_, i) => paidList.filter(b => b.date && b.date.startsWith(`${curY}-${String(i+1).padStart(2,'0')}`)).reduce((s, b) => s + (Number(b.totalPrice) || 0), 0)), 
-                             backgroundColor: '#3b82f6', 
-                             borderRadius: 4 
-                         }] 
+                         datasets: [{ label: 'รายได้ (บาท)', data: mTH.map((_, i) => paidList.filter(b => b.date && b.date.startsWith(`${curY}-${String(i+1).padStart(2,'0')}`)).reduce((s, b) => s + (Number(b.totalPrice) || 0), 0)), backgroundColor: '#3b82f6', borderRadius: 4 }] 
                      }, 
                      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
                  });
@@ -1897,32 +1944,132 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
              }, 300);
         };
 
+        window.printWeeklySchedule = () => {
+            const today = window.getThailandDate(); let html = `<div class="p-6 bg-white w-full"><div class="text-center mb-4 border-b border-slate-200 pb-3"><h2 class="text-xl font-black text-slate-800">ตารางการจองสนาม (8 วัน)</h2><p class="text-xs text-slate-500">ข้อมูล ณ วันที่ ${window.formatThaiDate(today)} เวลา ${String(window.getThailandHour()).padStart(2,'0')}:${String(window.getThailandTimeParts().minute).padStart(2,'0')} น.</p></div><div class="flex flex-wrap justify-between items-start w-full">`;
+            for (let i=0; i<=7; i++) {
+                const d = new Date(window.parseLocalDate(today)); d.setDate(d.getDate() + i); const dS = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                const bks = window.allBookingsCache.filter(b => b.date === dS && !b.isCustomerProfile);
+                html += `<div class="w-[49%] mb-4 break-inside-avoid border border-slate-300 rounded-lg overflow-hidden"><h3 class="text-[10px] font-bold bg-slate-100 p-1 text-center border-b border-slate-300">${window.formatThaiDate(dS)}</h3><table class="w-full text-left text-[8px] border-collapse bg-white"><thead><tr class="bg-slate-50 text-slate-500"><th class="border-b border-r p-1 text-center w-8">เวลา</th><th class="border-b border-r p-1 text-center w-1/2">สนาม 1</th><th class="border-b p-1 text-center w-1/2">สนาม 2</th></tr></thead><tbody>`;
+                for(let h=6; h<=20; h++) {
+                    const b1 = bks.find(b => b.court==="สนาม 1" && h>=parseInt((b.time||"0").split(':')[0],10) && h<parseInt((b.time||"0").split(':')[0],10)+Number(b.hours)), b2 = bks.find(b => b.court==="สนาม 2" && h>=parseInt((b.time||"0").split(':')[0],10) && h<parseInt((b.time||"0").split(':')[0],10)+Number(b.hours));
+                    const fS = (b) => !b ? '<div class="text-center text-slate-300">-</div>' : `<div class="flex flex-col pl-1"><span class="font-bold text-slate-800 truncate">${b.customerName}</span><span class="text-[7px] text-slate-500">125/${b.address} <span class="${window.hasSlip(b)?'text-blue-600':'text-orange-600'}">${window.hasSlip(b)?'(จ่าย)':'(ค้าง)'}</span></span></div>`;
+                    html += `<tr class="hover:bg-slate-50"><td class="border-b border-r p-1 text-center font-mono font-bold text-slate-400">${h}:00</td><td class="border-b border-r p-0.5 ${b1?(window.hasSlip(b1)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b1)}</td><td class="border-b p-0.5 ${b2?(window.hasSlip(b2)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b2)}</td></tr>`;
+                }
+                html += `</tbody></table></div>`;
+            }
+            document.getElementById('receiptContent').innerHTML = html + `</div></div>`;
+            document.title = `ตารางจองสนาม_${today}`;
+            document.querySelector('#receiptModal > div').className = 'bg-white max-w-5xl w-full mx-auto relative flex flex-col items-center p-0 md:p-6 shadow-2xl';
+            document.getElementById('receiptModal').classList.add('modal-active');
+        };
+
+        window.printReceipt = async (id) => {
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return window.showAlert("ไม่พบข้อมูล");
+            const hrs = Number(b.hours||0), startH = parseInt((b.time||"00").split(':')[0],10); let std = 0, pk = 0;
+            for(let i=0; i<hrs; i++) { if (startH+i >= 18) pk++; else std++; } const total = std*100 + pk*150;
+            const rHtml = (type) => `<div class="border border-slate-800 p-4 relative bg-white" style="page-break-inside: avoid;"><div class="flex justify-between items-start mb-2"><div class="flex items-start gap-2"><img src="แมกไม้พื้นหลังดำ.jpg" class="w-10 h-10 object-contain" onerror="this.style.display='none'"><div><h2 class="text-base font-black text-slate-800 leading-tight">MAKMAI TENNIS CLUB</h2><p class="text-[9px] font-bold text-slate-500">ใบเสร็จรับเงิน / Receipt</p></div></div><div class="text-right"><div class="text-[9px] font-bold text-slate-500 mb-0.5">${type==='copy'?'สำเนา':'ต้นฉบับ'}</div><div class="font-mono text-xs font-bold text-slate-700">#${window.generateRef(b)}</div><div class="text-[9px] font-medium">วันที่: ${window.formatThaiDate(window.getThailandDate())}</div></div></div><div class="border-t border-slate-800 py-1.5 my-1"><div class="mb-1.5"><h3 class="text-[9px] font-bold text-slate-800 border-b border-slate-300 pb-0.5 mb-1">ผู้มาใช้บริการ / Customer</h3><div class="grid grid-cols-2 gap-1 text-[11px]"><div><span class="text-slate-500">ผู้จอง:</span> <span class="font-bold">${b.customerName}</span></div><div><span class="text-slate-500">บ้านเลขที่:</span> <span class="font-bold">125/${b.address}</span></div><div><span class="text-slate-500">เจ้าของแปลง:</span> <span class="font-bold">${b.ownerName||'-'}</span></div></div></div><div><h3 class="text-[9px] font-bold text-slate-800 border-b border-slate-300 pb-0.5 mb-1">รายละเอียด / Booking</h3><div class="grid grid-cols-3 gap-1 text-[11px]"><div><span class="text-slate-500">สนาม:</span> <span class="font-bold">${b.court}</span></div><div><span class="text-slate-500">เริ่ม:</span> <span class="font-bold">${b.time} น.</span></div><div><span class="text-slate-500">เวลา:</span> <span class="font-bold">${b.hours} ชม.</span></div></div></div></div><div class="space-y-0.5 border-t border-slate-800 pt-1.5">${std>0?`<div class="flex justify-between text-[10px]"><span class="text-slate-600">ค่าสนาม 06:00-18:00 (${std} ชม.)</span><span class="font-mono font-bold">฿${std*100}</span></div>`:''}${pk>0?`<div class="flex justify-between text-[10px]"><span class="text-slate-600">ค่าสนาม 18:00-21:00 (${pk} ชม.)</span><span class="font-mono font-bold">฿${pk*150}</span></div>`:''}<div class="flex justify-between mt-1 pt-1 border-t border-slate-300"><span class="text-xs font-black text-slate-800">ยอดรวม / Total</span><span class="text-lg font-black text-slate-900 font-mono">฿${total}</span></div></div><div class="flex justify-end pt-8 mt-2"><div class="text-center w-28"><div class="border-b border-slate-400 mb-1 h-6"></div><span class="text-[8px] font-bold text-slate-500">ผู้รับเงิน / Recipient</span></div></div></div>`;
+            document.getElementById('receiptContent').innerHTML = `<div class="flex flex-col gap-0">${rHtml('copy')}<div class="w-full py-4 relative flex items-center justify-center print:py-6"><div class="absolute w-full border-b-2 border-dashed border-slate-400 top-1/2"></div><span class="relative bg-white px-2 text-[8px] text-slate-500 font-mono z-10">✂ ตัดตามรอยประ</span></div>${rHtml('original')}</div>`;
+            document.title = `${b.ownerName?b.ownerName.split(' ')[0]:b.customerName}_${window.generateRef(b).replace(/\//g,'-')}`;
+            document.querySelector('#receiptModal > div').className = 'bg-white max-w-xl w-full relative flex flex-col items-center p-0 md:p-4 shadow-2xl';
+            document.getElementById('receiptModal').classList.add('modal-active');
+        };
+
+        window.updateMaintenanceWarning = function() {
+            const p = window.getThailandTimeParts();
+            const y = parseInt(p.year, 10);
+            const m = parseInt(p.month, 10);
+            
+            let currentQ = Math.ceil(m / 3);
+            let prevQ = currentQ - 1;
+            let prevYear = y;
+            if (prevQ === 0) { prevQ = 4; prevYear = y - 1; }
+
+            const flagKey = `makmai_maintenance_done_${prevYear}_Q${prevQ}`;
+            const banner = document.getElementById('maintenanceWarningBanner');
+            if (!banner) return;
+            
+            if (!safeStorage.getItem(flagKey)) {
+                const cutoffMonth = (currentQ - 1) * 3 + 1;
+                const cutoffDateStr = `${y}-${String(cutoffMonth).padStart(2, '0')}-01`;
+                const oldRecords = window.allBookingsCache.filter(b => b.date < cutoffDateStr && !b.isCustomerProfile);
+                
+                if (oldRecords.length > 0) banner.classList.remove('hidden');
+                else banner.classList.add('hidden');
+            } else { banner.classList.add('hidden'); }
+        };
+
+        window.checkAutoMaintenance = function() {
+            if (!window.adminMode) return; 
+            const p = window.getThailandTimeParts(); const y = parseInt(p.year, 10); const m = parseInt(p.month, 10);
+            let currentQ = Math.ceil(m / 3); let prevQ = currentQ - 1; let prevYear = y;
+            if (prevQ === 0) { prevQ = 4; prevYear = y - 1; }
+            const flagKey = `makmai_maintenance_done_${prevYear}_Q${prevQ}`;
+            
+            if (!safeStorage.getItem(flagKey)) {
+                const cutoffMonth = (currentQ - 1) * 3 + 1;
+                const cutoffDateStr = `${y}-${String(cutoffMonth).padStart(2, '0')}-01`;
+                const oldRecords = window.allBookingsCache.filter(b => b.date < cutoffDateStr && !b.isCustomerProfile);
+                
+                if (oldRecords.length > 0) {
+                    window.pendingMaintenance = { flagKey: flagKey, title: `ไตรมาส ${prevQ}_${prevYear}`, records: oldRecords };
+                    document.getElementById('maintenanceTitle').innerText = `ถึงรอบสำรองข้อมูล ${window.pendingMaintenance.title}`;
+                    document.getElementById('maintenanceCount').innerText = `${oldRecords.length} รายการ`;
+                    document.getElementById('autoMaintenanceModal').classList.add('modal-active');
+                } else { safeStorage.setItem(flagKey, 'true'); }
+            }
+        };
+
+        window.executeAutoMaintenance = async function() {
+            const btn = document.getElementById('btnStartMaintenance'); btn.disabled = true;
+            const records = window.pendingMaintenance.records;
+            let minDate = records[0].date; let maxDate = records[0].date;
+            records.forEach(b => { if (b.date < minDate) minDate = b.date; if (b.date > maxDate) maxDate = b.date; });
+            const fileSuffix = `${minDate}_ถึง_${maxDate}`;
+
+            try {
+                btn.innerText = "กำลังโหลด Excel... (1/3)";
+                const excelData = records.sort((a,b) => { if (a.date !== b.date) return a.date.localeCompare(b.date); return (a.time||"").localeCompare(b.time||""); }).map((b, i) => {
+                    const hasSlip = window.hasSlip(b); const exp = Number(b.totalPrice)||0; const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
+                    let status = 'ชำระแล้ว';
+                    if (!hasSlip) status = 'ค้างชำระ'; else if (scn < exp) status = 'ยอดไม่ครบ'; else if (scn > exp && !b.isMultipleBooking) status = 'ชำระเกิน';
+                    return { 'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 'ยอดรวม (บาท)': exp, 'ยอดโอนจริง (บาท)': hasSlip ? scn : 0, 'สถานะ': status };
+                });
+                const ws = XLSX.utils.json_to_sheet(excelData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Archive");
+                XLSX.writeFile(wb, `Makmai_Backup_Excel_${fileSuffix}.xlsx`);
+                await new Promise(r => setTimeout(r, 1500));
+
+                btn.innerText = "กำลังโหลด JSON... (2/3)";
+                const jsonBlob = new Blob([JSON.stringify(records, null, 2)], {type: "application/json"});
+                const jsonUrl = URL.createObjectURL(jsonBlob); const a = document.createElement('a'); a.href = jsonUrl; a.download = `Makmai_Backup_JSON_${fileSuffix}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(jsonUrl);
+                await new Promise(r => setTimeout(r, 1500));
+
+                btn.innerText = "กำลังลบข้อมูลเก่า... (3/3)";
+                for (const b of records) { await deleteDoc(doc(collectionRef, String(b.id))); }
+
+                safeStorage.setItem(window.pendingMaintenance.flagKey, 'true'); window.closeMaintenanceModal(); window.updateMaintenanceWarning(); window.showAlert("✅ การบำรุงรักษาฐานข้อมูลเสร็จสมบูรณ์เรียบร้อยแล้ว", "success");
+            } catch(e) { console.error(e); window.showAlert("❌ เกิดข้อผิดพลาด: " + e.message, "danger"); } finally { btn.disabled = false; btn.innerText = "เริ่มดำเนินการ"; }
+        };
+
         window.backupData = async () => {
             try {
                 const a = document.createElement('a'), p = window.getThailandTimeParts();
                 a.href = URL.createObjectURL(new Blob([JSON.stringify(window.allBookingsCache.concat(window.customerProfiles), null, 2)], {type: "application/json"}));
                 a.download = `makmai_backup_online_${p.year}-${p.month}-${p.day}_${p.hour}-${p.minute}-${p.second}.json`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); window.showAlert("ดาวน์โหลดไฟล์สำรองข้อมูลเรียบร้อย");
-            } catch(e) { window.showAlert("เกิดข้อผิดพลาดในการสำรองข้อมูล"); }
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); window.showAlert("ดาวน์โหลดไฟล์สำรองข้อมูลเรียบร้อย", "success");
+            } catch(e) { window.showAlert("เกิดข้อผิดพลาดในการสำรองข้อมูล", "danger"); }
         };
 
         window.triggerRestore = () => document.getElementById('restoreInput').click();
 
         window.importBackupFile = async (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            
+            const file = event.target.files[0]; if (!file) return;
             let importMode = '';
             
-            if (confirm("การนำเข้าข้อมูล (Import):\n\nกด [ตกลง/OK] เพื่อ 'รวมข้อมูล' จากไฟล์นี้เข้ากับของเดิมที่มีอยู่ในระบบออนไลน์ (ข้อมูลเก่าไม่หาย)\n\nกด [ยกเลิก/Cancel] หากต้องการล้างของเดิมทิ้งแล้วเขียนทับใหม่")) {
-                importMode = 'merge';
-            } else {
-                if (confirm("⚠️ คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการ 'ล้างข้อมูลปัจจุบันทั้งหมดบนออนไลน์' และแทนที่ด้วยไฟล์นี้?")) {
-                    importMode = 'replace';
-                } else {
-                    event.target.value = ''; 
-                    return;
-                }
+            const mergeConfirmed = await window.customConfirm("การนำเข้าข้อมูล (Import):\n\nกด [ตกลง/OK] เพื่อ 'รวมข้อมูล' จากไฟล์นี้เข้ากับของเดิมที่มีอยู่ในระบบออนไลน์ (ข้อมูลเก่าไม่หาย)\n\nกด [ยกเลิก/Cancel] เพื่อไปยังตัวเลือกถัดไป", "รูปแบบการนำเข้าข้อมูล?", "warning");
+            
+            if (mergeConfirmed) { importMode = 'merge'; } else {
+                const replaceConfirmed = await window.customConfirm("⚠️ คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการ 'ล้างข้อมูลปัจจุบันทั้งหมดบนออนไลน์' และแทนที่ด้วยไฟล์นี้?\n\nกด [ตกลง/OK] เพื่อแทนที่ทั้งหมด", "ล้างข้อมูลเขียนทับ?", "danger");
+                if (replaceConfirmed) { importMode = 'replace'; } else { event.target.value = ''; return; }
             }
             
             const r = new FileReader();
@@ -1930,7 +2077,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 try {
                     const data = JSON.parse(e.target.result); 
                     if (!Array.isArray(data)) throw new Error("รูปแบบไม่ถูกต้อง");
-                    if (!collectionRef) return window.showAlert("❌ เชื่อมต่อฐานข้อมูลไม่สำเร็จ");
+                    if (!collectionRef) return window.showAlert("❌ เชื่อมต่อฐานข้อมูลไม่สำเร็จ", "danger");
                     
                     if (importMode === 'replace') {
                         window.showAlert("กำลังล้างข้อมูลเก่า กรุณารอสักครู่...");
@@ -1943,22 +2090,18 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         if(!item.id) item.id = Date.now().toString()+Math.random().toString(36).substr(2,4); 
                         await setDoc(doc(collectionRef, String(item.id)), item); 
                     }
-                    window.showAlert(`อัปโหลดสำเร็จ! กรุณารอสักครู่...`); 
+                    window.showAlert(`อัปโหลดสำเร็จ! กรุณารอสักครู่...`, "success"); 
                     window.closeModal();
-                } catch (err) { 
-                    window.showAlert("เกิดข้อผิดพลาด: " + err.message); 
-                } finally { 
-                    event.target.value = ''; 
-                }
+                } catch (err) { window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { event.target.value = ''; }
             };
             r.readAsText(file);
         };
 
-        // --- SUBMIT BOOKING (AND SAVE PROFILE) ---
+        // --- 10. FORM SUBMISSIONS ---
         document.getElementById('bookingForm').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('submitBtn'); const fd = new FormData(e.target);
             try {
-                btn.disabled = true; btn.innerHTML = '<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังใช้ AI ตรวจสอบสลิป...</span>';
+                btn.disabled = true; btn.innerHTML = '<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังตรวจสอบ...</span>';
                 const date = fd.get('date'), time = fd.get('time'), startH = parseInt(time.split(':')[0], 10), hours = parseInt(fd.get('hours'), 10), cleanAddress = window.normalizeAddress(fd.get('address')), weekStr = window.getWeekString(date), finalOwnerName = (fd.get('ownerName1') + ' ' + fd.get('ownerName2')).trim(), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour(), files = document.getElementById('slipInput').files, isCurrentHour = (date === todayThaiStr && startH === nowH);
 
                 const isMultiple = document.getElementById('isMultipleSlipForm').checked;
@@ -1981,23 +2124,16 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 let totalScannedAmount = 0;
                 let hasConnectionError = false;
                 
-                // Compress & Scan with AI
                 for(let i = 0; i < files.length; i++) {
-                    const compressedBase64 = await compressImage(files[i]);
+                    const compressedBase64 = await window.compressImage(files[i]);
                     slipsArray.push(compressedBase64);
-                    const scannedAmt = Number(await scanSlipAmountWithAI(compressedBase64));
-                    
-                    if (scannedAmt === -1) {
-                        hasConnectionError = true;
-                    } else if (!isNaN(scannedAmt)) {
-                        totalScannedAmount += scannedAmt;
-                    }
+                    const scannedAmt = Number(await window.scanSlipAmountWithAI(compressedBase64));
+                    if (scannedAmt === -1) { hasConnectionError = true; } else if (!isNaN(scannedAmt)) { totalScannedAmount += scannedAmt; }
                 }
 
                 let implicitLightHours = 0, totalPrice = 0;
                 for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
                 
-                // Compare scanned amount with expected total price
                 if (files.length > 0) {
                     if (hasConnectionError) {
                         const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบยอดเงิน และยืนยันการจองเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
@@ -2032,7 +2168,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 if (!collectionRef) return window.showAlert("❌ ฐานข้อมูลยังไม่ได้เชื่อมต่อ", "danger");
                 await setDoc(doc(collectionRef, newId), { id: newId, date, court: fd.get('court'), time: time, hours: hours, lightHours: implicitLightHours, customerName: fd.get('customerName'), phoneNumber: fd.get('phoneNumber'), address: cleanAddress, ownerName: finalOwnerName, totalPrice: totalPrice, scannedAmount: (files.length > 0 ? totalScannedAmount : 0), isMultipleBooking: isMultiple, timestamp: Date.now(), week: weekStr, slips: slipsArray });
                 
-                // SAVE CUSTOMER PROFILE (To prevent it from being deleted during quarterly maintenance)
                 try {
                     const safeName = encodeURIComponent(fd.get('customerName').trim().replace(/\s+/g, '_'));
                     const customerId = `CUST_${cleanAddress}_${safeName}`;
@@ -2060,11 +2195,38 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; }
         };
 
-        // INTEGRATE AI SCAN INTO UPDATE SLIP
+        document.getElementById('editBookingForm').onsubmit = async (e) => {
+            e.preventDefault(); const btn = document.querySelector('#editBookingForm button[type="submit"]'); const fd = new FormData(e.target);
+            try {
+                btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
+                const idValue = document.getElementById('editBookingId').value, date = fd.get('date'), court = fd.get('court'), time = fd.get('time'), hours = parseInt(fd.get('hours'), 10), startH = parseInt(time.split(':')[0], 10), weekStr = window.getWeekString(date), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour();
+                
+                if (!window.adminMode && (date < todayThaiStr || (date === todayThaiStr && startH < nowH))) return window.showAlert("❌ เปลี่ยนเป็นเวลาย้อนหลังไม่ได้", "danger");
+                const existing = window.allBookingsCache.find(x => String(x.id) === idValue); if (!existing) return;
+                const cleanAddress = window.normalizeAddress(existing.address);
+
+                if (date > todayThaiStr && !window.adminMode) {
+                    if (window.allBookingsCache.filter(b => String(b.id) !== idValue && window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้าแล้ว`, "danger");
+                }
+
+                const requested = Array.from({length: hours}, (_, i) => startH + i);
+                if (window.allBookingsCache.filter(b => String(b.id) !== idValue && b.date === date && b.court === court).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!", "danger");
+
+                let implicitLightHours = 0, totalPrice = 0;
+                for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
+                
+                existing.date = date; existing.court = court; existing.time = time; existing.hours = hours; existing.lightHours = implicitLightHours; existing.totalPrice = totalPrice; existing.week = weekStr;
+                
+                await setDoc(doc(collectionRef, String(existing.id)), existing);
+                window.closeEditBookingModal(); 
+                window.syncScheduleToBooking(existing, false); 
+                window.showAlert("แก้ไขวัน-เวลาสำเร็จออนไลน์", "success");
+            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = 'บันทึกการแก้ไข'; }
+        };
+
         document.getElementById('updateSlipInput').onchange = async (e) => {
             const files = e.target.files; if (files.length === 0 || !window.currentUploadId) return;
             window.closeUploadPrompt(); 
-            
             const isMultiple = document.getElementById('updateIsMultipleSlip').checked;
             
             try {
@@ -2074,7 +2236,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     let existingSlips = window.getSlips(b); 
                     
                     for(let i=0; i<files.length; i++) {
-                        const compressedBase64 = await compressImage(files[i]);
+                        const compressedBase64 = await window.compressImage(files[i]);
                         existingSlips.push(compressedBase64);
                     }
 
@@ -2082,12 +2244,8 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     let hasConnectionError = false;
                     
                     for(let i=0; i<existingSlips.length; i++) {
-                        const scannedAmt = Number(await scanSlipAmountWithAI(existingSlips[i]));
-                        if (scannedAmt === -1) {
-                            hasConnectionError = true;
-                        } else if (!isNaN(scannedAmt)) {
-                            totalScannedAmount += scannedAmt;
-                        }
+                        const scannedAmt = Number(await window.scanSlipAmountWithAI(existingSlips[i]));
+                        if (scannedAmt === -1) { hasConnectionError = true; } else if (!isNaN(scannedAmt)) { totalScannedAmount += scannedAmt; }
                     }
                     
                     const expectedPrice = Number(b.totalPrice);
@@ -2134,73 +2292,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             } catch (err) { window.showAlert("อัปโหลดไม่สำเร็จ", "danger"); } finally { e.target.value = ''; window.currentUploadId = null; }
         };
 
-        window.openEditBookingModal = (id) => {
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return;
-            const p = window.getThailandTimeParts();
-            const nowDateTime = new Date(p.year, parseInt(p.month,10)-1, p.day, parseInt(p.hour,10), parseInt(p.minute,10), 0);
-            const bStartH = parseInt((b.time||"00:00").split(':')[0], 10);
-            const bookingDateTime = new Date(b.date.split('-')[0], parseInt(b.date.split('-')[1],10)-1, b.date.split('-')[2], bStartH, 0, 0);
-            const diffHours = (bookingDateTime.getTime() - nowDateTime.getTime()) / (1000 * 60 * 60);
-
-            if (window.hasSlip(b) && diffHours < 24 && !window.adminMode) return window.showAlert("❌ ไม่สามารถแก้ไขได้ (รายการที่ชำระเงินแล้วต้องแจ้งล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนเวลาเริ่มเล่น)", "danger");
-
-            document.getElementById('editBookingId').value = b.id;
-            const editDateFp = document.getElementById('editDateInput')._flatpickr; 
-            if (editDateFp) { 
-                if (window.adminMode) {
-                    editDateFp.set('minDate', null); editDateFp.set('disable', []); 
-                } else {
-                    editDateFp.set('minDate', window.getThailandDate());
-                    const maxDateObj = new Date(p.year, parseInt(p.month, 10)-1, p.day); maxDateObj.setDate(maxDateObj.getDate() + 7);
-                    const maxBookingDateStr = `${maxDateObj.getFullYear()}-${String(maxDateObj.getMonth()+1).padStart(2,'0')}-${String(maxDateObj.getDate()).padStart(2,'0')}`;
-                    editDateFp.set('disable', [function(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` > maxBookingDateStr; }]);
-                }
-                editDateFp.setDate(b.date); 
-            }
-            document.getElementById('editCourt').value = b.court;
-            let timeHtml = ''; for(let i=6; i<=20; i++) timeHtml += `<option value="${String(i).padStart(2,'0')}:00">${i}:00 น.</option>`;
-            document.getElementById('editTime').innerHTML = timeHtml; document.getElementById('editTime').value = (b.time||"").padStart(5, '0');
-            window.updateEditHourOptions(); document.getElementById('editHours').value = b.hours;
-            document.getElementById('editBookingModal').classList.add('modal-active');
-        };
-
-        document.getElementById('editBookingForm').onsubmit = async (e) => {
-            e.preventDefault(); const btn = document.querySelector('#editBookingForm button[type="submit"]'); const fd = new FormData(e.target);
-            try {
-                btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
-                const idValue = document.getElementById('editBookingId').value, date = fd.get('date'), court = fd.get('court'), time = fd.get('time'), hours = parseInt(fd.get('hours'), 10), startH = parseInt(time.split(':')[0], 10), weekStr = window.getWeekString(date), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour();
-                
-                if (!window.adminMode && (date < todayThaiStr || (date === todayThaiStr && startH < nowH))) return window.showAlert("❌ เปลี่ยนเป็นเวลาย้อนหลังไม่ได้", "danger");
-                const existing = window.allBookingsCache.find(x => String(x.id) === idValue); if (!existing) return;
-                const cleanAddress = window.normalizeAddress(existing.address);
-
-                if (date > todayThaiStr && !window.adminMode) {
-                    if (window.allBookingsCache.filter(b => String(b.id) !== idValue && window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้าแล้ว`, "danger");
-                }
-
-                const requested = Array.from({length: hours}, (_, i) => startH + i);
-                if (window.allBookingsCache.filter(b => String(b.id) !== idValue && b.date === date && b.court === court).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!", "danger");
-
-                let implicitLightHours = 0, totalPrice = 0;
-                for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
-                
-                existing.date = date; existing.court = court; existing.time = time; existing.hours = hours; existing.lightHours = implicitLightHours; existing.totalPrice = totalPrice; existing.week = weekStr;
-                
-                // ถ้ายอดรวมเปลี่ยน ต้องคำนวณสถานะใหม่
-                if (existing.scannedAmount !== undefined && window.hasSlip(existing)) {
-                    if (existing.scannedAmount < totalPrice) {
-                        // เปลี่ยนสถานะเป็นยอดไม่ครบ
-                    }
-                }
-                
-                await setDoc(doc(collectionRef, String(existing.id)), existing);
-                window.closeEditBookingModal(); 
-                window.syncScheduleToBooking(existing, false); 
-                window.showAlert("แก้ไขวัน-เวลาสำเร็จออนไลน์", "success");
-            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = 'บันทึกการแก้ไข'; }
-        };
-
-        // --- FIREBASE LOGIC (UPDATED WITH PROFILES) ---
+        // --- 11. FIREBASE INITIALIZATION ---
         window.initAuth = async function() {
             try {
                 app = initializeApp(config); auth = getAuth(app); db = getFirestore(app); collectionRef = collection(db, 'bookings');
@@ -2250,21 +2342,21 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     }
                 });
             } catch (e) { console.error(e); window.showAlert("เชื่อมต่อ Firebase ไม่สำเร็จ", "danger"); }
-            init(); window.updateLoginUI();
+            window.init(); window.updateLoginUI();
         };
 
         window.autoDeletePastUnpaid = async function() {
             const nowStr = `${window.getThailandDate()} ${window.getThailandHour().toString().padStart(2,'0')}:00`;
             for (const b of window.allBookingsCache) {
-                if (!window.hasSlip(b)) {
-                    if (`${b.date} ${b.time.split(':')[0].padStart(2,'0')}:00` <= nowStr) {
+                if (!window.hasSlip(b) && !b.isCustomerProfile) {
+                    if (`${b.date} ${(b.time||"00:00").split(':')[0].padStart(2,'0')}:00` <= nowStr) {
                         try { await deleteDoc(doc(collectionRef, String(b.id))); } catch(e) {}
                     }
                 }
             }
         };
 
-        const init = function() {
+        window.init = function() {
             const today = window.getThailandDate(), curWS = window.getStartOfWeek(window.getWeekString(today)), nextWE = new Date(curWS); nextWE.setDate(nextWE.getDate() + 13);
             const sMin = `${curWS.getFullYear()}-${String(curWS.getMonth()+1).padStart(2,'0')}-${String(curWS.getDate()).padStart(2,'0')}`;
             const sMax = `${nextWE.getFullYear()}-${String(nextWE.getMonth()+1).padStart(2,'0')}-${String(nextWE.getDate()).padStart(2,'0')}`;
