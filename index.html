@@ -2,7 +2,6 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <!-- อนุญาตให้ซูมเข้าออกบนมือถือและ PWA -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Makmai Tennis Club - Booking System (Online)</title>
     <meta name="description" content="ระบบจองคอร์ตเทนนิสหมู่บ้านแมกไม้ (Online Cloud Version)">
@@ -26,19 +25,10 @@
         /* Flatpickr Customization */
         .flatpickr-calendar { font-family: 'Kanit', sans-serif; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; }
         .flatpickr-day.selected { background: #2563eb !important; border-color: #2563eb !important; }
-        
         .flatpickr-day.nextMonthDay:not(.flatpickr-disabled), 
-        .flatpickr-day.prevMonthDay:not(.flatpickr-disabled) {
-            color: #1e293b !important; opacity: 1 !important;
-        }
-
-        .flatpickr-day.future-restricted-blue.flatpickr-disabled {
-            color: #2563eb !important; background-color: #eff6ff !important; font-weight: 500; cursor: not-allowed; opacity: 0.8 !important; border-color: transparent !important;
-        }
-
-        .flatpickr-day.flatpickr-disabled:not(.future-restricted-blue) {
-            color: #94a3b8 !important; background-color: #f8fafc !important; cursor: not-allowed; opacity: 0.7 !important;
-        }
+        .flatpickr-day.prevMonthDay:not(.flatpickr-disabled) { color: #1e293b !important; opacity: 1 !important; }
+        .flatpickr-day.future-restricted-blue.flatpickr-disabled { color: #2563eb !important; background-color: #eff6ff !important; font-weight: 500; cursor: not-allowed; opacity: 0.8 !important; border-color: transparent !important; }
+        .flatpickr-day.flatpickr-disabled:not(.future-restricted-blue) { color: #94a3b8 !important; background-color: #f8fafc !important; cursor: not-allowed; opacity: 0.7 !important; }
 
         .modal-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -97,7 +87,6 @@
 
         <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 md:mb-6 no-print">
-            <!-- Left Side: Title -->
             <div class="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-left">
                 <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2 justify-center md:justify-start">
                     <span class="bg-blue-600 text-white p-1 rounded">🎾</span> แมกไม้เทนนิสคลับ
@@ -108,14 +97,11 @@
                 </div>
             </div>
 
-            <!-- Center: Logo -->
             <div id="logoContainer" class="flex-shrink-0 my-2 md:my-0 hidden md:block">
                 <img src="แมกไม้พื้นหลังดำ.jpg" class="h-16 md:h-24 w-16 md:w-24 object-cover rounded-lg shadow-sm bg-slate-800" alt="Makmai Logo" onerror="this.style.display='none'">
             </div>
 
-            <!-- Right Side: Action Button -->
             <div class="flex flex-1 justify-center md:justify-end gap-2 flex-wrap items-center w-full">
-                <!-- Group of Admin/User Buttons (Hidden when Guest) -->
                 <div id="mainActionButtons" class="flex gap-2 flex-wrap hidden justify-center md:justify-end w-full md:w-auto">
                     <button onclick="window.openExportModal()" class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 flex items-center gap-2 transition-all shadow-lg shadow-green-200">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
@@ -138,7 +124,6 @@
                         🔒 ปลดล็อกผู้ดูแล
                     </button>
                 </div>
-                <!-- Login Button (Visible to all) -->
                 <button id="loginBtn" onclick="window.toggleLogin()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all flex items-center gap-2 shadow-lg mt-2 md:mt-0 w-full md:w-auto justify-center">
                     🔐 เข้าสู่ระบบ (สำหรับจอง)
                 </button>
@@ -218,7 +203,6 @@
                                 </label>
                             </div>
                             
-                            <!-- เพิ่ม Checkbox ใบเสร็จหลายการจอง ตรงนี้ -->
                             <div class="flex items-start gap-2 mt-2 px-1">
                                 <input type="checkbox" id="isMultipleSlipForm" name="isMultipleBooking" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
                                 <label for="isMultipleSlipForm" class="text-[10px] md:text-xs font-bold text-slate-500 cursor-pointer leading-tight">
@@ -383,7 +367,7 @@
         </div>
     </div>
 
-    <!-- Prompt Modal (Custom for iframe compatibility) -->
+    <!-- Prompt Modal -->
     <div id="promptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center mx-2">
             <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1623,7 +1607,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     const slipCountTxt = window.getSlips(b).length > 1 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">${window.getSlips(b).length}</span>` : '';
                     
-                    // ปรับโครงสร้างปุ่มให้มี onclick แทรกเข้าไปโดยตรง (ง่ายที่สุดและเสถียรที่สุด)
                     let actH = `<td class="p-1 md:px-4 md:py-3 border-none ${!window.isLoggedIn?'hidden':''}"><div class="flex justify-center gap-1">` + 
                         (window.isLoggedIn ? 
                         `<button type="button" onclick="event.stopPropagation(); window.printReceipt('${b.id}')" class="p-1 md:p-2 rounded-lg transition-colors ${paid ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-300'}" ${!paid ? 'disabled' : ''} title="พิมพ์ใบเสร็จ"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>` + 
@@ -1682,6 +1665,155 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 window.currentSlipIndex++;
                 window.updateSlipModalView();
             }
+        };
+
+        window.printWeeklySchedule = () => {
+            const today = window.getThailandDate(); let html = `<div class="p-6 bg-white w-full"><div class="text-center mb-4 border-b border-slate-200 pb-3"><h2 class="text-xl font-black text-slate-800">ตารางการจองสนาม (8 วัน)</h2><p class="text-xs text-slate-500">ข้อมูล ณ วันที่ ${window.formatThaiDate(today)} เวลา ${String(window.getThailandHour()).padStart(2,'0')}:${String(window.getThailandTimeParts().minute).padStart(2,'0')} น.</p></div><div class="flex flex-wrap justify-between items-start w-full">`;
+            for (let i=0; i<=7; i++) {
+                const d = new Date(window.parseLocalDate(today)); d.setDate(d.getDate() + i); const dS = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                const bks = window.allBookingsCache.filter(b => b.date === dS && !b.isCustomerProfile);
+                html += `<div class="w-[49%] mb-4 break-inside-avoid border border-slate-300 rounded-lg overflow-hidden"><h3 class="text-[10px] font-bold bg-slate-100 p-1 text-center border-b border-slate-300">${window.formatThaiDate(dS)}</h3><table class="w-full text-left text-[8px] border-collapse bg-white"><thead><tr class="bg-slate-50 text-slate-500"><th class="border-b border-r p-1 text-center w-8">เวลา</th><th class="border-b border-r p-1 text-center w-1/2">สนาม 1</th><th class="border-b p-1 text-center w-1/2">สนาม 2</th></tr></thead><tbody>`;
+                for(let h=6; h<=20; h++) {
+                    const b1 = bks.find(b => b.court==="สนาม 1" && h>=parseInt(b.time.split(':')[0],10) && h<parseInt(b.time.split(':')[0],10)+Number(b.hours)), b2 = bks.find(b => b.court==="สนาม 2" && h>=parseInt(b.time.split(':')[0],10) && h<parseInt(b.time.split(':')[0],10)+Number(b.hours));
+                    const fS = (b) => !b ? '<div class="text-center text-slate-300">-</div>' : `<div class="flex flex-col pl-1"><span class="font-bold text-slate-800 truncate">${b.customerName}</span><span class="text-[7px] text-slate-500">125/${b.address} <span class="${window.hasSlip(b)?'text-blue-600':'text-orange-600'}">${window.hasSlip(b)?'(จ่าย)':'(ค้าง)'}</span></span></div>`;
+                    html += `<tr class="hover:bg-slate-50"><td class="border-b border-r p-1 text-center font-mono font-bold text-slate-400">${h}:00</td><td class="border-b border-r p-0.5 ${b1?(window.hasSlip(b1)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b1)}</td><td class="border-b p-0.5 ${b2?(window.hasSlip(b2)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b2)}</td></tr>`;
+                }
+                html += `</tbody></table></div>`;
+            }
+            document.getElementById('receiptContent').innerHTML = html + `</div></div>`;
+            document.title = `ตารางจองสนาม_${today}`;
+            document.querySelector('#receiptModal > div').className = 'bg-white max-w-5xl w-full mx-auto relative flex flex-col items-center p-0 md:p-6 shadow-2xl';
+            document.getElementById('receiptModal').classList.add('modal-active');
+        };
+
+        window.printReceipt = async (id) => {
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return window.showAlert("ไม่พบข้อมูล");
+            const hrs = Number(b.hours||0), startH = parseInt((b.time||"00").split(':')[0],10); let std = 0, pk = 0;
+            for(let i=0; i<hrs; i++) { if (startH+i >= 18) pk++; else std++; } const total = std*100 + pk*150;
+            const rHtml = (type) => `<div class="border border-slate-800 p-4 relative bg-white" style="page-break-inside: avoid;"><div class="flex justify-between items-start mb-2"><div class="flex items-start gap-2"><img src="แมกไม้พื้นหลังดำ.jpg" class="w-10 h-10 object-contain" onerror="this.style.display='none'"><div><h2 class="text-base font-black text-slate-800 leading-tight">MAKMAI TENNIS CLUB</h2><p class="text-[9px] font-bold text-slate-500">ใบเสร็จรับเงิน / Receipt</p></div></div><div class="text-right"><div class="text-[9px] font-bold text-slate-500 mb-0.5">${type==='copy'?'สำเนา':'ต้นฉบับ'}</div><div class="font-mono text-xs font-bold text-slate-700">#${window.generateRef(b)}</div><div class="text-[9px] font-medium">วันที่: ${window.formatThaiDate(window.getThailandDate())}</div></div></div><div class="border-t border-slate-800 py-1.5 my-1"><div class="mb-1.5"><h3 class="text-[9px] font-bold text-slate-800 border-b border-slate-300 pb-0.5 mb-1">ผู้มาใช้บริการ / Customer</h3><div class="grid grid-cols-2 gap-1 text-[11px]"><div><span class="text-slate-500">ผู้จอง:</span> <span class="font-bold">${b.customerName}</span></div><div><span class="text-slate-500">บ้านเลขที่:</span> <span class="font-bold">125/${b.address}</span></div><div><span class="text-slate-500">เจ้าของแปลง:</span> <span class="font-bold">${b.ownerName||'-'}</span></div></div></div><div><h3 class="text-[9px] font-bold text-slate-800 border-b border-slate-300 pb-0.5 mb-1">รายละเอียด / Booking</h3><div class="grid grid-cols-3 gap-1 text-[11px]"><div><span class="text-slate-500">สนาม:</span> <span class="font-bold">${b.court}</span></div><div><span class="text-slate-500">เริ่ม:</span> <span class="font-bold">${b.time} น.</span></div><div><span class="text-slate-500">เวลา:</span> <span class="font-bold">${b.hours} ชม.</span></div></div></div></div><div class="space-y-0.5 border-t border-slate-800 pt-1.5">${std>0?`<div class="flex justify-between text-[10px]"><span class="text-slate-600">ค่าสนาม 06:00-18:00 (${std} ชม.)</span><span class="font-mono font-bold">฿${std*100}</span></div>`:''}${pk>0?`<div class="flex justify-between text-[10px]"><span class="text-slate-600">ค่าสนาม 18:00-21:00 (${pk} ชม.)</span><span class="font-mono font-bold">฿${pk*150}</span></div>`:''}<div class="flex justify-between mt-1 pt-1 border-t border-slate-300"><span class="text-xs font-black text-slate-800">ยอดรวม / Total</span><span class="text-lg font-black text-slate-900 font-mono">฿${total}</span></div></div><div class="flex justify-end pt-8 mt-2"><div class="text-center w-28"><div class="border-b border-slate-400 mb-1 h-6"></div><span class="text-[8px] font-bold text-slate-500">ผู้รับเงิน / Recipient</span></div></div></div>`;
+            document.getElementById('receiptContent').innerHTML = `<div class="flex flex-col gap-0">${rHtml('copy')}<div class="w-full py-4 relative flex items-center justify-center print:py-6"><div class="absolute w-full border-b-2 border-dashed border-slate-400 top-1/2"></div><span class="relative bg-white px-2 text-[8px] text-slate-500 font-mono z-10">✂ ตัดตามรอยประ</span></div>${rHtml('original')}</div>`;
+            document.title = `${b.ownerName?b.ownerName.split(' ')[0]:b.customerName}_${window.generateRef(b).replace(/\//g,'-')}`;
+            document.querySelector('#receiptModal > div').className = 'bg-white max-w-xl w-full relative flex flex-col items-center p-0 md:p-4 shadow-2xl';
+            document.getElementById('receiptModal').classList.add('modal-active');
+        };
+
+        window.viewSlipFromId = (id) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            window.currentSlipArray = window.getSlips(b);
+            if(window.currentSlipArray.length > 0) { 
+                window.currentViewingSlipId = id; 
+                window.currentSlipIndex = 0;
+                window.updateSlipModalView();
+                
+                const isP = window.isBookingPast(b); 
+                const btnC = document.getElementById('btnChangeSlipModal');
+                const btnR = document.getElementById('btnRemoveSlipModal'); 
+                const chkM = document.getElementById('modalIsMultipleSlip');
+                
+                if (chkM) {
+                    chkM.checked = !!b.isMultipleBooking;
+                    chkM.disabled = isP && !window.adminMode;
+                }
+                
+                if (isP && !window.adminMode) { 
+                    btnC.style.display = 'none'; 
+                    btnR.style.display = 'none'; 
+                } else { 
+                    btnC.style.display = 'flex'; 
+                    btnR.style.display = 'flex'; 
+                } 
+                document.getElementById('slipModal').classList.add('modal-active'); 
+            } else {
+                window.showAlert("ไม่พบรูปสลิป", "danger"); 
+            }
+        };
+
+        window.toggleMultipleBookingStatus = async (isChecked) => {
+            if (!window.currentViewingSlipId) return;
+            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId));
+            if (!b) return;
+
+            const isP = window.isBookingPast(b);
+            if (isP && !window.adminMode) {
+                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
+                return window.showAlert("❌ ไม่สามารถแก้ไขสถานะรายการในอดีตได้", "danger");
+            }
+
+            try {
+                b.isMultipleBooking = isChecked;
+                await setDoc(doc(collectionRef, String(b.id)), b);
+                window.showAlert("อัปเดตสถานะใบเสร็จเรียบร้อย", "success");
+                window.renderAll();
+            } catch(e) {
+                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
+                window.showAlert("อัปเดตสถานะไม่สำเร็จ: " + e.message, "danger");
+            }
+        };
+
+        window.addMoreSlipInModal = async () => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            window.currentUploadId = window.currentViewingSlipId; 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
+        };
+
+        window.triggerUploadSlip = (id) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            window.currentUploadId = id; 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
+        };
+
+        window.removeCurrentSlipInModal = () => { 
+            if (!window.currentViewingSlipId) return; 
+            window.removeSlip(window.currentViewingSlipId, true); 
+        };
+
+        window.removeSlip = async (id, fromM = false) => { 
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            
+            const isLast = window.currentSlipArray.length <= 1;
+            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
+            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
+            if (!confirmed) return; 
+            
+            try { 
+                window.currentSlipArray.splice(window.currentSlipIndex, 1);
+                
+                b.slips = [...window.currentSlipArray];
+                if (b.slip) b.slip = ""; 
+
+                if (b.slips.length === 0) {
+                    b.scannedAmount = 0;
+                } else {
+                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
+                    let newTotal = 0;
+                    for (let slipData of b.slips) {
+                         const amt = Number(await scanSlipAmountWithAI(slipData));
+                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
+                    }
+                    b.scannedAmount = newTotal;
+                }
+                
+                await setDoc(doc(collectionRef, String(b.id)), b); 
+                
+                if (fromM) { 
+                    if (window.currentSlipArray.length === 0) {
+                        window.closeModal(); 
+                        document.getElementById('slipPreview').src = ''; 
+                    } else {
+                        if (window.currentSlipIndex >= window.currentSlipArray.length) {
+                            window.currentSlipIndex = window.currentSlipArray.length - 1;
+                        }
+                        window.updateSlipModalView();
+                    }
+                } 
+                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
+                window.renderAll();
+            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
         };
 
         window.navigateWeek = function(dir) {
@@ -2257,6 +2389,36 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     window.showAlert(`เพิ่มสลิปเรียบร้อย (รวมทั้งหมด ${existingSlips.length} รูป)`, "success"); 
                 }
             } catch (err) { window.showAlert("อัปโหลดไม่สำเร็จ", "danger"); } finally { e.target.value = ''; window.currentUploadId = null; }
+        };
+
+        window.openEditBookingModal = (id) => {
+            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return;
+            const p = window.getThailandTimeParts();
+            const nowDateTime = new Date(p.year, parseInt(p.month,10)-1, p.day, parseInt(p.hour,10), parseInt(p.minute,10), 0);
+            const bStartH = parseInt((b.time||"00:00").split(':')[0], 10);
+            const bookingDateTime = new Date(b.date.split('-')[0], parseInt(b.date.split('-')[1],10)-1, b.date.split('-')[2], bStartH, 0, 0);
+            const diffHours = (bookingDateTime.getTime() - nowDateTime.getTime()) / (1000 * 60 * 60);
+
+            if (window.hasSlip(b) && diffHours < 24 && !window.adminMode) return window.showAlert("❌ ไม่สามารถแก้ไขได้ (รายการที่ชำระเงินแล้วต้องแจ้งล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนเวลาเริ่มเล่น)", "danger");
+
+            document.getElementById('editBookingId').value = b.id;
+            const editDateFp = document.getElementById('editDateInput')._flatpickr; 
+            if (editDateFp) { 
+                if (window.adminMode) {
+                    editDateFp.set('minDate', null); editDateFp.set('disable', []); 
+                } else {
+                    editDateFp.set('minDate', window.getThailandDate());
+                    const maxDateObj = new Date(p.year, parseInt(p.month, 10)-1, p.day); maxDateObj.setDate(maxDateObj.getDate() + 7);
+                    const maxBookingDateStr = `${maxDateObj.getFullYear()}-${String(maxDateObj.getMonth()+1).padStart(2,'0')}-${String(maxDateObj.getDate()).padStart(2,'0')}`;
+                    editDateFp.set('disable', [function(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` > maxBookingDateStr; }]);
+                }
+                editDateFp.setDate(b.date); 
+            }
+            document.getElementById('editCourt').value = b.court;
+            let timeHtml = ''; for(let i=6; i<=20; i++) timeHtml += `<option value="${String(i).padStart(2,'0')}:00">${i}:00 น.</option>`;
+            document.getElementById('editTime').innerHTML = timeHtml; document.getElementById('editTime').value = (b.time||"").padStart(5, '0');
+            window.updateEditHourOptions(); document.getElementById('editHours').value = b.hours;
+            document.getElementById('editBookingModal').classList.add('modal-active');
         };
 
         // --- FIREBASE LOGIC (UPDATED WITH PROFILES) ---
