@@ -1379,6 +1379,13 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 if (btnCurrentWeek) btnCurrentWeek.classList.remove('hidden');
                 
                 if (fp) { fp.set('minDate', null); fp.set('maxDate', null); }
+                
+                const ad = document.getElementById('adminBtn');
+                if (window.adminMode) {
+                    ad.className = 'px-4 py-2 bg-red-600 text-white border border-red-200 rounded-xl text-sm font-bold hover:bg-red-700 transition-all flex items-center gap-2 ml-2'; ad.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> 🔓 ปลดล็อกแล้ว (เปิด)';
+                } else {
+                    ad.className = 'px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-bold hover:bg-red-100 transition-all flex items-center gap-2 ml-2'; ad.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> 🔒 ปลดล็อกผู้ดูแล';
+                }
             } else {
                 b.innerHTML = '🔐 เข้าสู่ระบบ (สำหรับจอง)'; b.classList.replace('bg-red-600', 'bg-slate-800'); b.classList.replace('hover:bg-red-700', 'hover:bg-slate-700');
                 lc.classList.add('hidden'); rc.classList.replace('lg:col-span-8', 'lg:col-span-12'); ab.classList.add('hidden'); if(ta) ta.classList.add('hidden');
@@ -1386,7 +1393,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 if (logo) logo.classList.add('hidden');
                 if (btnCurrentWeek) btnCurrentWeek.classList.add('hidden');
                 
-                const ad = document.getElementById('adminBtn'); ad.classList.replace('bg-red-600', 'bg-red-50'); ad.classList.replace('text-white', 'text-red-600'); ad.innerHTML = '🔒 ปลดล็อกผู้ดูแล';
+                const ad = document.getElementById('adminBtn'); ad.className = 'px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-bold hover:bg-red-100 transition-all flex items-center gap-2 ml-2'; ad.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> 🔒 ปลดล็อกผู้ดูแล';
                 if (fp) { fp.set('minDate', minS); fp.set('maxDate', maxS); }
                 const curW = window.getWeekString(today), nextW = window.getWeekString(maxS);
                 if (window.currentFilterWeek < curW || window.currentFilterWeek > nextW) window.goToCurrentWeek();
@@ -1401,7 +1408,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 if (p === "Mtennis") {
                     window.adminMode = true;
                     safeStorage.setItem('makmai_admin', 'true');
-                    const btn = document.getElementById('adminBtn'); btn.classList.replace('bg-red-50', 'bg-red-600'); btn.classList.replace('text-red-600', 'text-white'); btn.innerHTML = '🔓 ปลดล็อกแล้ว (เปิด)';
+                    const btn = document.getElementById('adminBtn'); btn.className = 'px-4 py-2 bg-red-600 text-white border border-red-200 rounded-xl text-sm font-bold hover:bg-red-700 transition-all flex items-center gap-2 ml-2'; btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> 🔓 ปลดล็อกแล้ว (เปิด)';
                     const fp = document.getElementById('scheduleDateInput')?._flatpickr; if (fp) { fp.set('minDate', null); fp.set('maxDate', null); }
                     window.showAlert("ปลดล็อกโหมดแอดมิน"); window.renderAll();
                 } else if (p !== null) window.showAlert("❌ รหัสไม่ถูกต้อง");
