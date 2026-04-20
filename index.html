@@ -152,6 +152,7 @@
 
         <!-- !!! STRICT LAYOUT RULE: 
              The tops of #bookingPanel (Left) and the Booking List Panel (Right) MUST align perfectly.
+             Both columns start directly with their panels. No spacers used above them.
         !!! -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
             <!-- Left: Booking Form -->
@@ -423,26 +424,6 @@
         </div>
     </div>
 
-    <!-- Auto Maintenance Modal -->
-    <div id="autoMaintenanceModal" class="fixed inset-0 bg-slate-900/100 z-[120] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center mx-2 border-t-4 border-purple-500">
-            <div class="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            </div>
-            <h3 id="maintenanceTitle" class="text-lg md:text-xl font-bold text-slate-800 mb-2">ถึงรอบการสำรองข้อมูลรายไตรมาส</h3>
-            <p class="text-slate-500 text-xs md:text-sm mb-4">เพื่อป้องกันโควต้าฐานข้อมูลเต็ม ระบบจะทำการดาวน์โหลด Excel, JSON และลบข้อมูลเก่าจำนวน <strong id="maintenanceCount" class="text-purple-600 font-black text-lg"></strong> ออกให้อัตโนมัติ</p>
-            <div class="bg-slate-50 p-3 md:p-4 rounded-xl text-left text-xs md:text-sm text-slate-600 mb-6 space-y-3 border border-slate-100">
-                <p class="font-bold flex items-center gap-2"><svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 1. บันทึกประวัติลงไฟล์ Excel</p>
-                <p class="font-bold flex items-center gap-2"><svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 2. สำรองข้อมูลรูปลงไฟล์ JSON</p>
-                <p class="font-bold flex items-center gap-2"><svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> <span class="text-red-600 font-bold">3. ลบข้อมูลเก่าออกจากออนไลน์!</span></p>
-            </div>
-            <div class="flex gap-2 md:gap-3 flex-col sm:flex-row">
-                <button onclick="window.closeMaintenanceModal()" class="flex-1 px-4 py-2.5 md:py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors text-sm md:text-base">ข้ามไปก่อน</button>
-                <button id="btnStartMaintenance" onclick="window.executeAutoMaintenance()" class="flex-1 px-4 py-2.5 md:py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-lg text-sm md:text-base">เริ่มดำเนินการ</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Edit Booking Modal -->
     <div id="editBookingModal" class="fixed inset-0 bg-slate-900/90 z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl mx-2">
@@ -545,7 +526,7 @@
             <div class="no-print flex flex-col items-center justify-center gap-2 sm:gap-3 w-full p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl relative z-10" onclick="event.stopPropagation();">
                 <label class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl cursor-pointer shadow-md w-full md:w-auto justify-center hover:bg-blue-50 transition-colors">
                     <input type="checkbox" id="modalIsMultipleSlip" class="w-5 h-5 text-blue-600 rounded cursor-pointer focus:ring-blue-500" onchange="window.toggleMultipleBookingStatus(this.checked)">
-                    <span class="text-sm font-bold text-slate-700 select-none">ใบเสร็จหลายการจอง (เปลี่ยนสถานะ ชำระเกิน ➜ ชำระแล้ว)</span>
+                    <span class="text-sm font-bold text-slate-700 select-none">ใบเสร็จหลายการจอง (เปลี่ยนสถานะ ชำระเกิน/ยอดไม่ครบ ➜ ชำระแล้ว)</span>
                 </label>
                 <div class="flex flex-wrap justify-center gap-2 sm:gap-3 w-full">
                     <button onclick="window.closeModal()" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer text-sm md:text-base">ปิดหน้าต่าง</button>
@@ -1335,6 +1316,57 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             });
         };
 
+        // --- 5. REFRESH DATA (LOCAL DB) ---
+        window.refreshData = async function() {
+            try {
+                const snap = await getDocs(collectionRef);
+                window.allBookingsCache = [];
+                window.customerProfiles = []; 
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.isCustomerProfile) {
+                        window.customerProfiles.push(data);
+                    } else {
+                        window.allBookingsCache.push(data);
+                    }
+                });
+                
+                window.autoDeletePastUnpaid();
+                window.allBookingsCache.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+                window.renderAll();
+                window.updateMaintenanceWarning();
+                
+                const s = document.getElementById('customerHistory'); 
+                if(s) {
+                    s.innerHTML = '<option value="">▼ เลือกรายชื่อเดิม</option>';
+                    const unique = new Map(); 
+                    
+                    window.customerProfiles.forEach(d => { 
+                        if (d.customerName && !unique.has(d.customerName)) {
+                            unique.set(d.customerName, { name: d.customerName, phone: d.phoneNumber, address: d.address, owner: d.ownerName }); 
+                        }
+                    });
+                    
+                    window.allBookingsCache.forEach(d => { 
+                        if (d.customerName && !unique.has(d.customerName)) {
+                            unique.set(d.customerName, { name: d.customerName, phone: d.phoneNumber, address: d.address, owner: d.ownerName }); 
+                        }
+                    });
+                    
+                    const sortedCustomers = Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name, 'th'));
+                    
+                    sortedCustomers.forEach(c => { 
+                        const opt = document.createElement('option'); 
+                        opt.value = JSON.stringify(c); 
+                        opt.textContent = c.name; 
+                        s.appendChild(opt); 
+                    });
+                }
+            } catch (e) {
+                console.error("Error loading online data:", e);
+            }
+        };
+
         // --- 5. AUTHENTICATION & LOGIN ---
         window.toggleLogin = function() {
             if (window.isLoggedIn) { 
@@ -1525,13 +1557,17 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         const fin = (date < today) || (date === today && nowH >= (parseInt(b.time.split(':')[0],10) + Number(b.hours)));
                         const hasSlip = window.hasSlip(b);
                         const expectedPrice = Number(b.totalPrice) || 0;
-                        const scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (hasSlip ? expectedPrice : 0);
+                        let scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (hasSlip ? expectedPrice : 0);
+                        
+                        if (b.isMultipleBooking) {
+                            scannedPrice = expectedPrice;
+                        }
                         
                         let cls = 'slot-booked';
                         if (hasSlip) {
                             if (fin) { cls = 'slot-played'; } 
                             else if (scannedPrice < expectedPrice) { cls = 'slot-underpaid'; } 
-                            else if (scannedPrice > expectedPrice && !b.isMultipleBooking) { cls = 'slot-overpaid'; } 
+                            else if (scannedPrice > expectedPrice) { cls = 'slot-overpaid'; } 
                             else { cls = 'slot-paid'; }
                         }
                         
@@ -1587,7 +1623,11 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     const isP = window.isBookingPast(b);
                     const paid = window.hasSlip(b);
                     const expectedPrice = Number(b.totalPrice) || 0;
-                    const scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (paid ? expectedPrice : 0);
+                    let scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (paid ? expectedPrice : 0);
+                    
+                    if (b.isMultipleBooking) {
+                        scannedPrice = expectedPrice; 
+                    }
                     
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
@@ -1603,7 +1643,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         statusText = 'ค้างชำระ'; badgeBg = 'bg-orange-100'; badgeText = 'text-orange-700';
                     } else if (scannedPrice < expectedPrice) {
                         statusText = 'ยอดไม่ครบ'; badgeBg = 'bg-red-100'; badgeText = 'text-red-700';
-                    } else if (scannedPrice > expectedPrice && !b.isMultipleBooking) {
+                    } else if (scannedPrice > expectedPrice) {
                         statusText = 'ชำระเกิน'; badgeBg = 'bg-purple-100'; badgeText = 'text-purple-700';
                     } else {
                         statusText = 'ชำระแล้ว'; badgeBg = 'bg-blue-100'; badgeText = 'text-blue-700';
@@ -1613,7 +1653,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         badgeBg = 'bg-slate-200'; badgeText = 'text-slate-600';
                         if (!paid) {
                             statusText = 'หมดเวลา';
-                        } else if (scannedPrice === expectedPrice || (scannedPrice > expectedPrice && b.isMultipleBooking)) {
+                        } else if (scannedPrice === expectedPrice) {
                             statusText = 'สำเร็จ';
                         }
                     }
@@ -1821,9 +1861,14 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 } else {
                     window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
                     let newTotal = 0;
+                    let aiFailed = false;
                     for (let slipData of b.slips) {
                          const amt = Number(await window.scanSlipAmountWithAI(slipData));
+                         if (amt === -1) aiFailed = true;
                          if (!isNaN(amt) && amt !== -1) newTotal += amt;
+                    }
+                    if (aiFailed || newTotal === 0) {
+                         newTotal = Number(b.totalPrice);
                     }
                     b.scannedAmount = newTotal;
                 }
@@ -1876,9 +1921,11 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             const getStatusTxt = (b) => {
                 if(!window.hasSlip(b)) return 'ค้างชำระ';
                 const exp = Number(b.totalPrice)||0;
-                const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
+                let scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
+                if (b.isMultipleBooking) scn = exp;
+                
                 if(scn < exp) return 'ยอดไม่ครบ';
-                if(scn > exp && !b.isMultipleBooking) return 'ชำระเกิน';
+                if(scn > exp) return 'ชำระเกิน';
                 return 'ชำระแล้ว';
             };
 
@@ -2167,12 +2214,14 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 
                 if (files.length > 0) {
                     if (hasConnectionError) {
-                        const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบยอดเงิน และยืนยันการจองเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
+                        const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nหากกด [ตกลง] ระบบจะข้ามการตรวจสอบและบันทึกสถานะเป็น 'ชำระแล้ว' ให้ทันที\n\nยืนยันการจองเลยหรือไม่?", "ข้ามการตรวจสอบ AI?", "warning");
                         if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
+                        totalScannedAmount = totalPrice;
                     } else if (totalScannedAmount === 0 || isNaN(totalScannedAmount)) {
-                        let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดเป็น ฿0\n(ยอดที่ต้องชำระคือ ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "❌ ตรวจสอบยอดเงิน", "danger");
+                        let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดเป็น ฿0\n(ยอดที่ต้องชำระคือ ฿${totalPrice})\n\nหากกด [ตกลง] ระบบจะบันทึกสถานะเป็น 'ชำระแล้ว' ให้ทันที\n\nยืนยันการจองเลยหรือไม่?`;
+                        const confirmed = await window.customConfirm(alertMsg, "ข้ามการตรวจสอบ AI?", "warning");
                         if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
+                        totalScannedAmount = totalPrice;
                     } else if (totalScannedAmount < totalPrice) {
                         let alertMsg = `⚠️ ยอดโอนยังไม่ครบ!\nระบบ AI ตรวจพบยอดเงินในสลิปรวม: ฿${totalScannedAmount}\n(ยอดที่ต้องชำระคือ: ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
                         const confirmed = await window.customConfirm(alertMsg, "❌ ยอดโอนยังไม่ครบ", "danger");
@@ -2282,12 +2331,14 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     const expectedPrice = Number(b.totalPrice);
                     
                     if (hasConnectionError) {
-                        const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบและบันทึกสลิปเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
+                        const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nหากกด [ตกลง] ระบบจะข้ามการตรวจสอบและบันทึกสถานะเป็น 'ชำระแล้ว' ให้ทันที\n\nต้องการบันทึกสลิปเลยหรือไม่?", "ข้ามการตรวจสอบ AI?", "warning");
                         if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
+                        totalScannedAmount = expectedPrice;
                     } else if (totalScannedAmount === 0 || isNaN(totalScannedAmount)) {
-                        let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดรวมเป็น ฿0\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "❌ ตรวจสอบยอดเงิน", "danger");
+                        let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดรวมเป็น ฿0\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nหากกด [ตกลง] ระบบจะบันทึกสถานะเป็น 'ชำระแล้ว' ให้ทันที\n\nต้องการบันทึกสลิปเลยหรือไม่?`;
+                        const confirmed = await window.customConfirm(alertMsg, "ข้ามการตรวจสอบ AI?", "warning");
                         if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
+                        totalScannedAmount = expectedPrice;
                     } else if (totalScannedAmount < expectedPrice) {
                         let alertMsg = `⚠️ ยอดโอนยังไม่ครบ!\nระบบ AI อ่านยอดเงินรวมจากสลิปทั้งหมดได้: ฿${totalScannedAmount}\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
                         const confirmed = await window.customConfirm(alertMsg, "❌ ยอดโอนยังไม่ครบ", "danger");
